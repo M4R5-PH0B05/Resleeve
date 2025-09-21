@@ -1,4 +1,6 @@
 # IMPORTS
+import base64
+
 import requests
 import json
 import pprintpp
@@ -25,27 +27,37 @@ Basic API Call
 https://musicbrainz.org/ws/2/release?query=release:"OK Computer"&fmt=json
 '''
 
+# Search for album releases by artist and album name
+def search_albums(artist, album):
+    url = 'https://musicbrainz.org/ws/2/release'
+    headers = {'User-Agent': 'Resleeve/1.0'}
+
+    return requests.get(url, headers=headers, params={
+        "query": f"release:'{album}' AND artist:'{artist}'",
+        "fmt": "json"
+    })
+
+# Get detailed tracklist and album info using MBID
+def get_tracklist(mbid):
+    url = f'https://musicbrainz.org/ws/2/release/{mbid}'
+    headers = {'User-Agent': 'Resleeve/1.0'}
+
+    return requests.get(url, headers=headers, params={
+        "fmt": "json",
+        "inc": "recordings"
+    })
+
+# Get album cover art as base64 encoded string
+def get_album_cover(mbid):
+    cover_url = f"https://coverartarchive.org/release/{mbid}/front"
+    headers = {'User-Agent': 'Resleeve/1.0'}
+    response = requests.get(cover_url, headers=headers)
+
+    if response.status_code == 200:
+        b64_image = base64.b64encode(response.content).decode('utf-8')
+        content_type = response.headers.get('content-type', 'image/jpeg')
+        return f"data:{content_type};base64,{b64_image}"
+    return None
 
 
 
-
-class request:
-    def __init__(self):
-        self.url = 'https://musicbrainz.org/ws/2/release'
-        self.headers = {'User-Agent': 'Resleeve/1.0'}
-
-    def searchAlbums(self,artist,album):
-        return requests.get(self.url,headers=self.headers,params={"query": f"release:'{album}' AND "
-                                                                                    f"artist:'{artist}'",
-                                                                           "fmt": "json"})
-    def getTracklist(self,MBID):
-        lookup_url = f"{self.url}/{MBID}"
-        return requests.get(lookup_url,headers=self.headers,params={"fmt":"json","inc":"recordings"})
-
-
-# MAIN BODY
-
-test = request()
-# response = test.searchAlbums("Bring Me The Horizon","Sempiternal")
-response = test.getTracklist('ace8eb0b-888e-4156-a922-87ad1e6ce290')
-pprintpp.pprint(response.json())

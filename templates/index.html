@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Resleeve</title>
+</head>
+<body>
+<div class="row">
+    <div class="column">
+        <h1>Welcome to Resleeve</h1>
+        <form method="post">
+            <label for="artist">Artist:</label><br>
+            <input type="text" id ="artist" name="artist"><br>
+            <label for="album">Album:</label><br>
+            <input type="text" id ="album" name="album"><br>
+            <br>
+            <input type="submit" id="submit" value="Submit"><br>
+        </form>
+
+        <h1>Options</h1>
+        {% if releases %}
+            <h2>Choose a release:</h2>
+            {% for option_number, release in releases.items() %}
+                <div>
+                    <h3>{{option_number}}</h3>
+                    <img src="{{release['Cover Image']}}" width="200px" height="200px">
+                    <p>Artist: {{release['Artist']}}</p>
+                    <p>Album: {{release['Title']}}</p>
+                    <p>Country: {{release['Country']}}</p>
+                    <p>Track Count: {{release['Track Count']}}</p>
+                    <p>MBID: {{release['MBID']}}</p>
+                    <form method="post">
+                        <input type="hidden" name="selected_artist" value="{{release['Artist']}}">
+                        <input type="hidden" name="selected_album" value="{{release['Title']}}">
+                        <input type="hidden" name="selected_country" value="{{release['Country']}}">
+                        <input type="hidden" name="selected_track_count" value="{{release['Track Count']}}">
+                        <input type="hidden" name="selected_MBID" value="{{release['MBID']}}">
+                        <input type="submit" id="submit-1" value="Select This Release"><br>
+                    </form>
+
+                </div>
+                <hr>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="column">
+        <h1>Testing</h1>
+        <br>
+        <h3>Chosen Album: </h3>
+        <img src="{{selected_cover_image}}" width="200px" height="200px">
+        <p>Artist: {{selected_artist}}</p>
+        <p>Album: {{selected_album}}</p>
+        <p>Country: {{selected_country}}</p>
+        <p>Track Count: {{selected_track_count}}</p>
+        <p>MBID: {{selected_mbid}}</p>
+        {% if tracklist %}
+        <ol>
+            {% for track_num,track_data in tracklist.items() %}
+            <li> {{track_data['title']}} | {{track_data['length']}}</li>
+            {% endfor %}
+        </ol>
+        {% endif %}
+    </div>
+</div>
+<style>
+    .row {
+  display: flex;
+}
+
+.column {
+  flex: 50%;
+}
+</style>
+</body>
+</html>
