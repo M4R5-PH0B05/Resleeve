@@ -59,6 +59,14 @@ def createTracklist(json_tracklist):
         }
     return tracklist
 
+
+# Subprograms i need to write
+# Get 5 most prominent colours from image
+# Number to barcode
+# Calculate longest track, and then work out percentage of each track compared to the longest track, then create a
+# status bar based on these measurements
+# Html Template Parser
+
 # Index Route
 @app.route('/',methods=['GET','POST'])
 def index():
@@ -72,6 +80,7 @@ def index():
             selected_mbid = request.form['selected_MBID']
             selected_cover_image = get_album_cover(selected_mbid)
             json_tracklist = get_tracklist(selected_mbid).json()
+            pprint(json_tracklist)
             tracklist = createTracklist(json_tracklist['media'][0]['tracks'])
             return render_template('index.html',
                                    selected_cover_image=selected_cover_image,
@@ -90,6 +99,7 @@ def index():
             album_list = search_albums(artist, album).json()
             # Create dictionary of results through parsing JSON data
             # pprint(album_list)
+            pprint(album_list)
             parsed_albums = createList(album_list)
             return render_template('index.html', releases=parsed_albums)
 
