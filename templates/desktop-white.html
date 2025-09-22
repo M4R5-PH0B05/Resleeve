@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Three Column Layout with Footer</title>
+    <title>Evanescence - Fallen Album</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #333333;
+            font-family: Helvetica, Arial, sans-serif;
+            background: #FFFAEC;
             margin: 0;
             padding: 0;
             overflow: hidden;
@@ -23,119 +22,390 @@
         .container {
             width: 2560px;
             height: 1440px;
-            background: #FFFDF8;
-            display: grid;
-            grid-template-rows: 1fr auto;
-            border: none;
+            background: #FFFAEC;
+            position: relative;
             transform-origin: 0 0;
             transform: scale(0.5);
         }
 
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 80px;
-            height: 100%;
+        .album-cover {
+            position: absolute;
+            left: 63px;
+            top: 57px;
+            width: 680px;
+            height: 680px;
+            background-image: url('fallen.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
 
-        .column {
-            background: #FFFDF8;
-            padding: 80px;
-            height: 100%;
+        .artist-name {
+            position: absolute;
+            left: 61px;
+            top: 767px;
+            font-family: Helvetica, sans-serif;
+            font-size: 30px;
+            font-weight: normal;
+            color: black;
         }
 
-        .column h3 {
-            font-size: 64px;
-            margin-bottom: 50px;
-            color: #333;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-        }
-
-        .column p {
-            font-size: 48px;
-            color: #666;
-            line-height: 1.6;
-            margin-bottom: 40px;
-        }
-
-        .footer {
-            background: #FFFDF8;
-            color: white;
-            padding: 80px 100px;
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 80px;
-            font-size: 36px;
-            border-top: 1px solid #ddd;
-        }
-
-        .footer-item {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .footer-label {
+        .album-title {
+            position: absolute;
+            left: 56px;
+            top: 811px;
+            font-family: Helvetica, sans-serif;
+            font-size: 96px;
             font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 16px;
-            letter-spacing: 2px;
-            color: #ccc;
+            color: black;
         }
 
-        .footer-value {
-            color: white;
+        .color-palette {
+            position: absolute;
+            top: 860px;
+            display: flex;
+            gap: 8px;
         }
 
+        .color-1 {
+            left: 472px;
+            width: 39px;
+            height: 39px;
+            background-color: #e6f1f7;
+            position: absolute;
+            top: 862px;
+        }
+
+        .color-2 {
+            left: 530px;
+            width: 39px;
+            height: 39px;
+            background-color: #738eb4;
+            position: absolute;
+            top: 862px;
+        }
+
+        .color-3 {
+            left: 588px;
+            width: 39px;
+            height: 39px;
+            background-color: #3f6fa2;
+            position: absolute;
+            top: 860px;
+        }
+
+        .color-4 {
+            left: 646px;
+            width: 39px;
+            height: 39px;
+            background-color: #171233;
+            position: absolute;
+            top: 860px;
+        }
+
+        .color-5 {
+            left: 704px;
+            width: 39px;
+            height: 39px;
+            background-color: #060606;
+            position: absolute;
+            top: 860px;
+        }
+
+        .separator-line {
+            position: absolute;
+            left: 63px;
+            top: 941px;
+            width: 680px;
+            height: 1px;
+            background-color: #ddd;
+        }
+
+        .track-list {
+            position: absolute;
+            left: 808px;
+            top: 57px;
+            width: 508px;
+        }
+
+        .track-item {
+            position: relative;
+            height: 117px;
+            margin-bottom: 29px;
+            overflow: hidden;
+        }
+
+        .track-number {
+            position: absolute;
+            left: 0;
+            top: 37px;
+            transform: translateY(-50%);
+            font-family: Helvetica, sans-serif;
+            font-size: 35px;
+            font-weight: bold;
+            color: black;
+            text-align: center;
+            width: 48px;
+        }
+
+        .track-title {
+            position: absolute;
+            left: 60px;
+            top: 15px;
+            font-family: Helvetica, sans-serif;
+            font-size: 35px;
+            font-weight: bold;
+            color: black;
+            width: 311px;
+            line-height: 1.2;
+        }
+
+        .track-duration {
+            position: absolute;
+            left: 63px;
+            top: 74px;
+            font-family: Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: normal;
+            color: #3c3c3c;
+        }
+
+        .track-date {
+            position: absolute;
+            left: 128px;
+            top: 74px;
+            font-family: Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: normal;
+            color: #3c3c3c;
+        }
+
+        .track-separator {
+            position: absolute;
+            left: 62px;
+            top: 108px;
+            width: 100%;
+            height: 1px;
+            background-color: #ddd;
+        }
+
+        .track-progress {
+            position: absolute;
+            left: 62px;
+            top: 108px;
+            height: 1px;
+            background-color: #888;
+        }
+
+        .track-list-right {
+            position: absolute;
+            left: 1355px;
+            top: 57px;
+            width: 508px;
+        }
+
+        .album-info {
+            position: absolute;
+            top: 979px;
+            display: flex;
+            gap: 216px;
+            left: 374px;
+        }
+
+        .info-item {
+            text-align: left;
+        }
+
+        .info-label {
+            font-family: Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-family: Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: normal;
+            color: black;
+        }
+
+        .barcode-image {
+            position: absolute;
+            left: 49px;
+            top: 908px;
+            width: 298px;
+            height: 198px;
+            background-image: url('fallen.jpg');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="main-content">
-            <div class="column">
-                <img src="fallen.jpg" height="500" width="500">
-                <h3>Column 1</h3>
+        <!-- Album Cover -->
+        <div class="album-cover"></div>
+
+        <!-- Artist and Album Title -->
+        <div class="artist-name">Evanescence</div>
+        <div class="album-title">Fallen</div>
+
+        <!-- Color Palette -->
+        <div class="color-1"></div>
+        <div class="color-2"></div>
+        <div class="color-3"></div>
+        <div class="color-4"></div>
+        <div class="color-5"></div>
+
+        <!-- Separator Line -->
+        <div class="separator-line"></div>
+
+        <!-- Track List Left Column -->
+        <div class="track-list">
+            <div class="track-item">
+                <div class="track-number">1.</div>
+                <div class="track-title">Going Under</div>
+                <div class="track-duration">3:34</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 309px;"></div>
             </div>
 
-            <div class="column">
-                <h3>Column 2</h3>
-                <p>This is the second column. Perfect for tracklists, album details, or additional metadata.</p>
-                <p>Each column has equal width and will expand vertically as needed.</p>
+            <div class="track-item">
+                <div class="track-number">2.</div>
+                <div class="track-title">Bring Me to Life</div>
+                <div class="track-duration">3:57</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 337px;"></div>
             </div>
 
-            <div class="column">
-                <h3>Column 3</h3>
-                <p>This is the third column. Great for additional information, credits, or supplementary content.</p>
-                <p>All three columns work together in this flexible grid system.</p>
+            <div class="track-item">
+                <div class="track-number">3.</div>
+                <div class="track-title">Everybody's Fool</div>
+                <div class="track-duration">3:15</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 295px;"></div>
+            </div>
+
+            <div class="track-item">
+                <div class="track-number">4.</div>
+                <div class="track-title">My Immortal</div>
+                <div class="track-duration">4:24</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 354px;"></div>
+            </div>
+
+            <div class="track-item">
+                <div class="track-number">5.</div>
+                <div class="track-title">Haunted</div>
+                <div class="track-duration">3:06</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 275px;"></div>
+            </div>
+
+            <div class="track-item">
+                <div class="track-number">6.</div>
+                <div class="track-title">Tourniquet</div>
+                <div class="track-duration">4:38</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 384px;"></div>
             </div>
         </div>
 
-        <div class="footer">
-            <div class="footer-item">
-                <span class="footer-label">Label 1</span>
-                <span class="footer-value">Value 1</span>
+        <!-- Track List Right Column -->
+        <div class="track-list-right">
+            <div class="track-item">
+                <div class="track-number">7.</div>
+                <div class="track-title">Imaginary</div>
+                <div class="track-duration">4:17</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 378px;"></div>
             </div>
-            <div class="footer-item">
-                <span class="footer-label">Label 2</span>
-                <span class="footer-value">Value 2</span>
+
+            <div class="track-item">
+                <div class="track-number">8.</div>
+                <div class="track-title">Taking Over Me</div>
+                <div class="track-duration">3:49</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 328px;"></div>
             </div>
-            <div class="footer-item">
-                <span class="footer-label">Label 3</span>
-                <span class="footer-value">Value 3</span>
+
+            <div class="track-item">
+                <div class="track-number">9.</div>
+                <div class="track-title">Hello</div>
+                <div class="track-duration">3:40</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 309px;"></div>
             </div>
-            <div class="footer-item">
-                <span class="footer-label">Label 4</span>
-                <span class="footer-value">Value 4</span>
+
+            <div class="track-item">
+                <div class="track-number">10.</div>
+                <div class="track-title">My Last Breath</div>
+                <div class="track-duration">4:07</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 351px;"></div>
             </div>
-            <div class="footer-item">
-                <span class="footer-label">Label 5</span>
-                <span class="footer-value">Value 5</span>
+
+            <div class="track-item">
+                <div class="track-number">11.</div>
+                <div class="track-title">Whisper</div>
+                <div class="track-duration">5:27</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 446px;"></div>
             </div>
-            <div class="footer-item">
-                <span class="footer-label">Label 6</span>
-                <span class="footer-value">Value 6</span>
+
+            <div class="track-item">
+                <div class="track-number">12.</div>
+                <div class="track-title">My Immortal (Band Version)</div>
+                <div class="track-duration">4:33</div>
+                <div class="track-date">March 2003</div>
+                <div class="track-separator"></div>
+                <div class="track-progress" style="width: 384px;"></div>
             </div>
         </div>
+
+        <!-- Album Information Footer -->
+        <div class="album-info">
+            <div class="info-item">
+                <div class="info-label">Release Date</div>
+                <div class="info-value">March 4th, 2003</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Run Time</div>
+                <div class="info-value">44:07</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Track Count</div>
+                <div class="info-value">12 Tracks</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Genre</div>
+                <div class="info-value">Nu Metal</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Format</div>
+                <div class="info-value">CD</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Type</div>
+                <div class="info-value">Album</div>
+            </div>
+        </div>
+
+        <!-- Barcode Area -->
+        <div class="barcode-image"></div>
     </div>
 </body>
 </html>
