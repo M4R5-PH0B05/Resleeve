@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evanescence - Fallen Album</title>
+    <title>Desktop White</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
         }
 
         .container {
-            width: 2560px;
+            width: 2060px;
             height: 1440px;
             background: #FFFAEC;
             position: relative;
@@ -34,7 +34,8 @@
             top: 57px;
             width: 680px;
             height: 680px;
-            background-image: url('fallen.jpg');
+            {#background-image: url({{ url_for('static', filename='fallen.jpg') }});#}
+            background-color: grey;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -116,14 +117,14 @@
             position: absolute;
             left: 63px;
             top: 941px;
-            width: 680px;
-            height: 1px;
-            background-color: #ddd;
+            width: 94%;
+            height: 5px;
+            background-color: #000000;
         }
 
         .track-list {
             position: absolute;
-            left: 808px;
+            left: 858px;
             top: 57px;
             width: 508px;
         }
@@ -185,7 +186,7 @@
             left: 62px;
             top: 108px;
             width: 100%;
-            height: 1px;
+            height: 10px;
             background-color: #ddd;
         }
 
@@ -193,13 +194,13 @@
             position: absolute;
             left: 62px;
             top: 108px;
-            height: 1px;
-            background-color: #888;
+            height: 10px;
+            background-color: #303030;
         }
 
         .track-list-right {
             position: absolute;
-            left: 1355px;
+            left: 1491px;
             top: 57px;
             width: 508px;
         }
@@ -208,7 +209,7 @@
             position: absolute;
             top: 979px;
             display: flex;
-            gap: 216px;
+            gap: 206px;
             left: 374px;
         }
 
@@ -234,10 +235,10 @@
         .barcode-image {
             position: absolute;
             left: 49px;
-            top: 908px;
+            top: 910px;
             width: 298px;
             height: 198px;
-            background-image: url('fallen.jpg');
+            background-image: url({{ url_for('static', filename='barcode.png') }});
             background-size: contain;
             background-repeat: no-repeat;
         }
@@ -249,9 +250,13 @@
         <div class="album-cover"></div>
 
         <!-- Artist and Album Title -->
-        <div class="artist-name">Evanescence</div>
-        <div class="album-title">Fallen</div>
-
+        {% if artist %}
+            <div class="artist-name">Evanescence</div>
+            <div class="album-title">Fallen</div>
+        {% else %}
+            <div class="artist-name">Artist</div>
+            <div class="album-title">Album</div>
+        {% endif %}
         <!-- Color Palette -->
         <div class="color-1"></div>
         <div class="color-2"></div>
@@ -261,151 +266,133 @@
 
         <!-- Separator Line -->
         <div class="separator-line"></div>
+{% if tracklist %}
+    {% set tracks = tracklist.keys() | sort %}
+    {% set total_tracks = tracks | length %}
+    {% if total_tracks > 20 %}
+        {% set tracks = tracks[:20] %}
+        {% set total_tracks = 20 %}
+    {% endif %}
+    {% set half = ((total_tracks) / 2) | round(0, 'ceil') | int %}
+{% else %}
+    {% set total_tracks = 12 %}
+    {% set half = 6 %}
+{% endif %}
 
-        <!-- Track List Left Column -->
-        <div class="track-list">
-            <div class="track-item">
-                <div class="track-number">1.</div>
-                <div class="track-title">Going Under</div>
-                <div class="track-duration">3:34</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 309px;"></div>
-            </div>
+<!-- Calculate dynamic sizing -->
+{% set available_height = 700 %}
+{% set track_height = (available_height / half) | round(0) | int %}
+{% set font_scale = (track_height / 117) %}
+{% set title_font = (35 * font_scale) | round(0) | int %}
+{% set duration_font = (24 * font_scale) | round(0) | int %}
+{% set number_font = (35 * font_scale) | round(0) | int %}
+{% set title_width = [200, (311 * font_scale) | round(0) | int] | max %}
 
-            <div class="track-item">
-                <div class="track-number">2.</div>
-                <div class="track-title">Bring Me to Life</div>
-                <div class="track-duration">3:57</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 337px;"></div>
-            </div>
+<!-- Track List Left Column -->
+<div class="track-list">
+    {% for i in range(half) %}
+        {% if tracklist %}
+            {% set track_num = tracks[i] %}
+            {% set track_data = tracklist[track_num] %}
+        {% else %}
+            {% set track_num = i + 1 %}
+            {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A'} %}
+        {% endif %}
 
-            <div class="track-item">
-                <div class="track-number">3.</div>
-                <div class="track-title">Everybody's Fool</div>
-                <div class="track-duration">3:15</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 295px;"></div>
-            </div>
-
-            <div class="track-item">
-                <div class="track-number">4.</div>
-                <div class="track-title">My Immortal</div>
-                <div class="track-duration">4:24</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 354px;"></div>
-            </div>
-
-            <div class="track-item">
-                <div class="track-number">5.</div>
-                <div class="track-title">Haunted</div>
-                <div class="track-duration">3:06</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 275px;"></div>
-            </div>
-
-            <div class="track-item">
-                <div class="track-number">6.</div>
-                <div class="track-title">Tourniquet</div>
-                <div class="track-duration">4:38</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 384px;"></div>
-            </div>
+        <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
+            <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
+            <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: {{ title_width }}px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ track_data.title }}</div>
+            <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
+            <div class="track-date" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{% if tracklist %}{{ track_data.get('date', 'N/A') }}{% else %}N/A{% endif %}</div>
+            <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
+            <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {% if tracklist and track_data.length != 'N/A' %}{{ (track_data.length.split(':')[0] | int * 60 + track_data.length.split(':')[1] | int) * 1.4 * font_scale }}px{% else %}{{ (200 * font_scale) | round(0) | int }}px{% endif %};"></div>
         </div>
+    {% endfor %}
+</div>
 
-        <!-- Track List Right Column -->
-        <div class="track-list-right">
-            <div class="track-item">
-                <div class="track-number">7.</div>
-                <div class="track-title">Imaginary</div>
-                <div class="track-duration">4:17</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 378px;"></div>
-            </div>
+<!-- Track List Right Column -->
+<div class="track-list-right">
+    {% for i in range(half, total_tracks) %}
+        {% if tracklist %}
+            {% set track_num = tracks[i] %}
+            {% set track_data = tracklist[track_num] %}
+        {% else %}
+            {% set track_num = i + 1 %}
+            {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A'} %}
+        {% endif %}
 
-            <div class="track-item">
-                <div class="track-number">8.</div>
-                <div class="track-title">Taking Over Me</div>
-                <div class="track-duration">3:49</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 328px;"></div>
+    <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
+        <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
+        <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: {{ title_width }}px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ track_data.title }}</div>
+        <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
+        <div class="track-date" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{% if tracklist %}{{ track_data.get('date', 'N/A') }}{% else %}N/A{% endif %}</div>
+        <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
+        <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {% if tracklist and track_data.length != 'N/A' %}{{ (track_data.length.split(':')[0] | int * 60 + track_data.length.split(':')[1] | int) * 1.4 * font_scale }}px{% else %}{{ (200 * font_scale) | round(0) | int }}px{% endif %};"></div>
+    </div>
+    {% endfor %}
+</div>
+        {%  if release_date %}
+            <!-- Album Information Footer -->
+            <div class="album-info">
+                <div class="info-item">
+                    <div class="info-label">Release Date</div>
+                    <div class="info-value">March 4th, 2003</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Run Time</div>
+                    <div class="info-value">44:07</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Track Count</div>
+                    <div class="info-value">12 Tracks</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Genre</div>
+                    <div class="info-value">Nu Metal</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Format</div>
+                    <div class="info-value">CD</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Type</div>
+                    <div class="info-value">Album</div>
+                </div>
             </div>
+        {%  else %}
+            <!-- Album Information Footer -->
+            <div class="album-info">
 
-            <div class="track-item">
-                <div class="track-number">9.</div>
-                <div class="track-title">Hello</div>
-                <div class="track-duration">3:40</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 309px;"></div>
+                <div class="info-item">
+                    <div class="info-label">Release Date</div>
+                    <div class="info-value">N/A</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Run Time</div>
+                    <div class="info-value">N/A</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Track Count</div>
+                    <div class="info-value">N/A</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Genre</div>
+                    <div class="info-value">N/A</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Format</div>
+                    <div class="info-value">N/A</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Type</div>
+                    <div class="info-value">N/A</div>
+                </div>
             </div>
-
-            <div class="track-item">
-                <div class="track-number">10.</div>
-                <div class="track-title">My Last Breath</div>
-                <div class="track-duration">4:07</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 351px;"></div>
-            </div>
-
-            <div class="track-item">
-                <div class="track-number">11.</div>
-                <div class="track-title">Whisper</div>
-                <div class="track-duration">5:27</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 446px;"></div>
-            </div>
-
-            <div class="track-item">
-                <div class="track-number">12.</div>
-                <div class="track-title">My Immortal (Band Version)</div>
-                <div class="track-duration">4:33</div>
-                <div class="track-date">March 2003</div>
-                <div class="track-separator"></div>
-                <div class="track-progress" style="width: 384px;"></div>
-            </div>
-        </div>
-
-        <!-- Album Information Footer -->
-        <div class="album-info">
-            <div class="info-item">
-                <div class="info-label">Release Date</div>
-                <div class="info-value">March 4th, 2003</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Run Time</div>
-                <div class="info-value">44:07</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Track Count</div>
-                <div class="info-value">12 Tracks</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Genre</div>
-                <div class="info-value">Nu Metal</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Format</div>
-                <div class="info-value">CD</div>
-            </div>
-            <div class="info-item">
-                <div class="info-label">Type</div>
-                <div class="info-value">Album</div>
-            </div>
-        </div>
+        {%  endif %}
 
         <!-- Barcode Area -->
-        <div class="barcode-image"></div>
+        <div class="barcode-image">
+        </div>
     </div>
 </body>
 </html>

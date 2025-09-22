@@ -3,7 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from api_testing import search_albums,get_tracklist,get_album_cover
 from pprintpp import pprint
 
-app = Flask(__name__,template_folder='../templates')
+app = Flask(__name__,template_folder='../templates', static_folder='../static')
 app.secret_key = 'Testing123!'
 # Creates a List of the Album Options based on the users search query.
 def createList(album_list):
@@ -105,6 +105,25 @@ def index():
 
     return render_template('index.html')
 
-
+@app.route('/template')
+def template():
+    sample_tracklist = {
+        1: {'title': 'Going Under', 'length': '3:34','date':'idk'},
+        2: {'title': 'Bring Me to Life', 'length': '3:57'},
+        3: {'title': "Everybody's Fool", 'length': '3:15'},
+        4: {'title': 'My Immortal', 'length': '4:24'},
+        5: {'title': 'Haunted', 'length': '3:06'},
+        6: {'title': 'Tourniquet', 'length': '4:38'},
+        7: {'title': 'Imaginary', 'length': '4:17'},
+        8: {'title': 'Taking Over Me', 'length': '3:49'},
+        9: {'title': 'Hello', 'length': '3:40'},
+        10: {'title': 'My Last Breath', 'length': '4:07'},
+        11: {'title': 'Whisper', 'length': '5:27'},
+        12: {'title': 'My Immortal (Band Version)', 'length': '4:33'}
+    }
+    json_tracklist = get_tracklist("e7e0369a-3784-4934-9419-d21483e6168d").json()
+    pprint(json_tracklist)
+    tracklist = createTracklist(json_tracklist['media'][0]['tracks'])
+    return render_template('desktop-white.html',tracklist=tracklist)
 if __name__ == '__main__':
     app.run(debug=True)

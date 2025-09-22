@@ -60,4 +60,5 @@ def get_album_cover(mbid):
     return None
 
 
+# print(search_albums("Bring me the horizon","Post Human: Survival Horror").json())
 
