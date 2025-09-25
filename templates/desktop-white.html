@@ -74,7 +74,7 @@
             height: 39px;
             background-color: #e6f1f7;
             position: absolute;
-            top: 862px;
+            top: 762px;
         }
 
         .color-2 {
@@ -83,7 +83,7 @@
             height: 39px;
             background-color: #738eb4;
             position: absolute;
-            top: 862px;
+            top: 762px;
         }
 
         .color-3 {
@@ -92,7 +92,7 @@
             height: 39px;
             background-color: #3f6fa2;
             position: absolute;
-            top: 860px;
+            top: 762px;
         }
 
         .color-4 {
@@ -101,7 +101,7 @@
             height: 39px;
             background-color: #171233;
             position: absolute;
-            top: 860px;
+            top: 762px;
         }
 
         .color-5 {
@@ -110,7 +110,7 @@
             height: 39px;
             background-color: #060606;
             position: absolute;
-            top: 860px;
+            top: 762px;
         }
 
         .separator-line {
@@ -249,13 +249,34 @@
         <!-- Album Cover -->
         <div class="album-cover"></div>
 
+        <!-- Calculate dynamic album title font size to fit within album cover width -->
+        {% if artist %}
+            {% set album_title_text = album %}
+        {% else %}
+            {% set album_title_text = "Album" %}
+        {% endif %}
+
+        {% set base_title_font = 96 %}
+        {% set max_title_width = 800 %}  <!-- Same as album cover width -->
+        {% set estimated_char_width = base_title_font * 0.6 %}  <!-- Rough estimate -->
+        {% set estimated_text_width = (album_title_text | length) * estimated_char_width %}
+
+        {% if estimated_text_width > max_title_width %}
+            {% set title_scale = max_title_width / estimated_text_width %}
+            {% set album_title_font = (base_title_font * title_scale) | round(0) | int %}
+        {% else %}
+            {% set album_title_font = base_title_font %}
+        {% endif %}
+
         <!-- Artist and Album Title -->
         {% if artist %}
-            <div class="artist-name">Evanescence</div>
-            <div class="album-title">Fallen</div>
+            {% set top_offset = (96 - album_title_font) * 0.7 %}
+            <div class="artist-name">{{artist}}</div>
+            <div class="album-title" style="font-size: {{ album_title_font }}px; width: 800px; top: {{ 811 + top_offset }}px;">{{album}}</div>
         {% else %}
+            {% set top_offset = (96 - album_title_font) * 0.7 %}
             <div class="artist-name">Artist</div>
-            <div class="album-title">Album</div>
+            <div class="album-title" style="font-size: {{ album_title_font }}px; width: 800px; top: {{ 811 + top_offset }}px;">Album</div>
         {% endif %}
         <!-- Color Palette -->
         <div class="color-1"></div>
@@ -336,27 +357,27 @@
             <div class="album-info">
                 <div class="info-item">
                     <div class="info-label">Release Date</div>
-                    <div class="info-value">March 4th, 2003</div>
+                    <div class="info-value">{{release_date}}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Run Time</div>
-                    <div class="info-value">44:07</div>
+                    <div class="info-value">{{run_time}}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Track Count</div>
-                    <div class="info-value">12 Tracks</div>
+                    <div class="info-value">{{track_count}}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Genre</div>
-                    <div class="info-value">Nu Metal</div>
+                    <div class="info-value">{{genre}}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Format</div>
-                    <div class="info-value">CD</div>
+                    <div class="info-value">{{format}}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Type</div>
-                    <div class="info-value">Album</div>
+                    <div class="info-value">{{type8}</div>
                 </div>
             </div>
         {%  else %}

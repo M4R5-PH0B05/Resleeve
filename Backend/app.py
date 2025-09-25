@@ -124,6 +124,6 @@ def template():
     json_tracklist = get_tracklist("e7e0369a-3784-4934-9419-d21483e6168d").json()
     pprint(json_tracklist)
     tracklist = createTracklist(json_tracklist['media'][0]['tracks'])
-    return render_template('desktop-white.html',tracklist=tracklist)
+    return render_template('desktop-white.html',tracklist=tracklist,artist="Bring Me The Horizon",album="Post Human: Survival Horror")
 if __name__ == '__main__':
     app.run(debug=True)
