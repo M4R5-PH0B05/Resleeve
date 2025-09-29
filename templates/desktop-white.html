@@ -496,7 +496,7 @@
 
             const titleEl = document.querySelector('.album-title');
             const rawTitle = titleEl ? titleEl.textContent.trim() : '';
-            const safeTitle = sanitizeFilename(rawTitle) || 'resleeve';
+             const safeTitle = sanitizeFilename(rawTitle) || 'resleeve';
             const fileName = `${safeTitle}-wallpaper.png`;
 
             const finish = href => triggerDownloadUrl(href, fileName, href.startsWith('blob:'));

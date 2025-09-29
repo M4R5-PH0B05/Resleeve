@@ -24,17 +24,6 @@ TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAA
 MAX_COVER_WORKERS = 4
 
 
-@lru_cache(maxsize=1)
-def fallback_cover_data_uri():
-    try:
-        fallback_path = os.path.join(app.static_folder, 'fallen.jpg')
-        with open(fallback_path, 'rb') as image_file:
-            encoded = base64.b64encode(image_file.read()).decode('ascii')
-        return f"data:image/jpeg;base64,{encoded}"
-    except Exception:
-        return TRANSPARENT_PIXEL
-
-
 def fetch_single_cover(mbid):
     # Fetches a single album cover as opposed to multiple like the usual function
     try:
@@ -305,8 +294,7 @@ def index():
             ])
             # dynamically load the album cover
             selected_cover_image = get_album_cover(selected_mbid)
-            if not selected_cover_image:
-                selected_cover_image = fallback_cover_data_uri()
+
             track_response = get_tracklist(selected_mbid)
             if track_response is not None:
                 json_tracklist = track_response.json()
@@ -341,7 +329,7 @@ def index():
                 colours = colourExtractor(cover_image)
             else:
                 colours = DEFAULT_COLOURS
-                cover_image = fallback_cover_data_uri()
+
             # return the template with the completed variables
             return render_template('desktop-white.html', artist=details[0], album=details[1],
                                    date=details[2], country=details[3], track_count=details[4], format=details[6],
