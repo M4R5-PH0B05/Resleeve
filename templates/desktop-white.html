@@ -34,7 +34,7 @@
             top: 57px;
             width: 680px;
             height: 680px;
-            {#background-image: url({{ url_for('static', filename='fallen.jpg') }});#}
+            background-image: url({{cover_image}});
             background-color: grey;
             background-size: cover;
             background-position: center;
@@ -59,20 +59,15 @@
             font-size: 96px;
             font-weight: bold;
             color: black;
-        }
-
-        .color-palette {
-            position: absolute;
-            top: 860px;
-            display: flex;
-            gap: 8px;
+            width: 680px;
+            overflow: hidden;
         }
 
         .color-1 {
             left: 472px;
             width: 39px;
             height: 39px;
-            background-color: #e6f1f7;
+            background-color: {{ colours[0] }};
             position: absolute;
             top: 762px;
         }
@@ -81,7 +76,7 @@
             left: 530px;
             width: 39px;
             height: 39px;
-            background-color: #738eb4;
+            background-color: {{ colours[1] }};
             position: absolute;
             top: 762px;
         }
@@ -90,7 +85,7 @@
             left: 588px;
             width: 39px;
             height: 39px;
-            background-color: #3f6fa2;
+            background-color: {{ colours[2] }};
             position: absolute;
             top: 762px;
         }
@@ -99,7 +94,7 @@
             left: 646px;
             width: 39px;
             height: 39px;
-            background-color: #171233;
+            background-color: {{ colours[3] }};
             position: absolute;
             top: 762px;
         }
@@ -108,7 +103,7 @@
             left: 704px;
             width: 39px;
             height: 39px;
-            background-color: #060606;
+            background-color: {{ colours[4] }};
             position: absolute;
             top: 762px;
         }
@@ -154,11 +149,15 @@
             left: 60px;
             top: 15px;
             font-family: Helvetica, sans-serif;
-            font-size: 35px;
             font-weight: bold;
             color: black;
-            width: 311px;
-            line-height: 1.2;
+            width: 440px;
+            line-height: 1.1;
+            height: 45px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .track-duration {
@@ -171,14 +170,14 @@
             color: #3c3c3c;
         }
 
-        .track-date {
+        .track-release-date {
             position: absolute;
-            left: 128px;
+            left: 180px;
             top: 74px;
             font-family: Helvetica, sans-serif;
-            font-size: 24px;
+            font-size: 18px;
             font-weight: normal;
-            color: #3c3c3c;
+            color: #666;
         }
 
         .track-separator {
@@ -188,6 +187,7 @@
             width: 100%;
             height: 10px;
             background-color: #ddd;
+            border-radius: 5px;
         }
 
         .track-progress {
@@ -196,6 +196,7 @@
             top: 108px;
             height: 10px;
             background-color: #303030;
+            border-radius: 5px;
         }
 
         .track-list-right {
@@ -209,8 +210,8 @@
             position: absolute;
             top: 979px;
             display: flex;
-            gap: 206px;
-            left: 374px;
+            gap: 166px;
+            left: 404px;
         }
 
         .info-item {
@@ -234,50 +235,76 @@
 
         .barcode-image {
             position: absolute;
-            left: 49px;
-            top: 910px;
-            width: 298px;
-            height: 198px;
-            background-image: url({{ url_for('static', filename='barcode.png') }});
-            background-size: contain;
-            background-repeat: no-repeat;
+            left: 65px;
+            top: 960px;
+            width: 258px;
+            height: 8px;
         }
     </style>
+    <script>
+        function adjustTrackTitleSize() {
+            const trackTitles = document.querySelectorAll('.track-title');
+            const maxWidth = 440;
+            const maxHeight = 45;
+            let globalFontSize = 35;
+            let needsWrapping = false;
+
+            // First pass: find the minimum font size needed across all tracks
+            trackTitles.forEach(title => {
+                title.style.whiteSpace = 'nowrap';
+                let fontSize = 35;
+                title.style.fontSize = fontSize + 'px';
+
+                // Find minimum font size for this track
+                while (fontSize >= 18 && title.scrollWidth > maxWidth) {
+                    fontSize -= 1;
+                    title.style.fontSize = fontSize + 'px';
+                }
+
+                // Track the smallest font size needed
+                globalFontSize = Math.min(globalFontSize, fontSize);
+
+                // Check if any track needs wrapping even at minimum font
+                if (fontSize <= 18 && title.scrollWidth > maxWidth) {
+                    needsWrapping = true;
+                }
+            });
+
+            // Second pass: apply uniform font size and wrapping to all tracks
+            trackTitles.forEach(title => {
+                if (needsWrapping) {
+                    title.style.fontSize = Math.max(14, globalFontSize * 0.85) + 'px';
+                    title.style.whiteSpace = 'normal';
+                } else {
+                    title.style.fontSize = globalFontSize + 'px';
+                    title.style.whiteSpace = 'nowrap';
+                }
+            });
+        }
+
+        window.addEventListener('load', function() {
+            // Small delay to ensure all content is rendered
+            setTimeout(() => {
+                adjustAlbumTitleSize();
+                adjustTrackTitleSize();
+            }, 100);
+        });
+    </script>
 </head>
 <body>
     <div class="container">
         <!-- Album Cover -->
         <div class="album-cover"></div>
 
-        <!-- Calculate dynamic album title font size to fit within album cover width -->
-        {% if artist %}
-            {% set album_title_text = album %}
-        {% else %}
-            {% set album_title_text = "Album" %}
-        {% endif %}
-
-        {% set base_title_font = 96 %}
-        {% set max_title_width = 800 %}  <!-- Same as album cover width -->
-        {% set estimated_char_width = base_title_font * 0.6 %}  <!-- Rough estimate -->
-        {% set estimated_text_width = (album_title_text | length) * estimated_char_width %}
-
-        {% if estimated_text_width > max_title_width %}
-            {% set title_scale = max_title_width / estimated_text_width %}
-            {% set album_title_font = (base_title_font * title_scale) | round(0) | int %}
-        {% else %}
-            {% set album_title_font = base_title_font %}
-        {% endif %}
-
         <!-- Artist and Album Title -->
         {% if artist %}
-            {% set top_offset = (96 - album_title_font) * 0.7 %}
             <div class="artist-name">{{artist}}</div>
-            <div class="album-title" style="font-size: {{ album_title_font }}px; width: 800px; top: {{ 811 + top_offset }}px;">{{album}}</div>
+            <div class="album-title">{{album}}</div>
         {% else %}
-            {% set top_offset = (96 - album_title_font) * 0.7 %}
             <div class="artist-name">Artist</div>
-            <div class="album-title" style="font-size: {{ album_title_font }}px; width: 800px; top: {{ 811 + top_offset }}px;">Album</div>
+            <div class="album-title">Album</div>
         {% endif %}
+
         <!-- Color Palette -->
         <div class="color-1"></div>
         <div class="color-2"></div>
@@ -287,133 +314,204 @@
 
         <!-- Separator Line -->
         <div class="separator-line"></div>
-{% if tracklist %}
-    {% set tracks = tracklist.keys() | sort %}
-    {% set total_tracks = tracks | length %}
-    {% if total_tracks > 20 %}
-        {% set tracks = tracks[:20] %}
-        {% set total_tracks = 20 %}
-    {% endif %}
-    {% set half = ((total_tracks) / 2) | round(0, 'ceil') | int %}
-{% else %}
-    {% set total_tracks = 12 %}
-    {% set half = 6 %}
-{% endif %}
 
-<!-- Calculate dynamic sizing -->
-{% set available_height = 700 %}
-{% set track_height = (available_height / half) | round(0) | int %}
-{% set font_scale = (track_height / 117) %}
-{% set title_font = (35 * font_scale) | round(0) | int %}
-{% set duration_font = (24 * font_scale) | round(0) | int %}
-{% set number_font = (35 * font_scale) | round(0) | int %}
-{% set title_width = [200, (311 * font_scale) | round(0) | int] | max %}
-
-<!-- Track List Left Column -->
-<div class="track-list">
-    {% for i in range(half) %}
         {% if tracklist %}
-            {% set track_num = tracks[i] %}
-            {% set track_data = tracklist[track_num] %}
+            {% set tracks = tracklist.keys() | sort %}
+            {% set total_tracks = tracks | length %}
+            {% if total_tracks > 20 %}
+                {% set tracks = tracks[:20] %}
+                {% set total_tracks = 20 %}
+            {% endif %}
+            {% set half = ((total_tracks) / 2) | round(0, 'ceil') | int %}
         {% else %}
-            {% set track_num = i + 1 %}
-            {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A'} %}
+            {% set total_tracks = 12 %}
+            {% set half = 6 %}
         {% endif %}
 
-        <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
-            <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
-            <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: {{ title_width }}px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ track_data.title }}</div>
-            <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
-            <div class="track-date" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{% if tracklist %}{{ track_data.get('date', 'N/A') }}{% else %}N/A{% endif %}</div>
-            <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
-            <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {% if tracklist and track_data.length != 'N/A' %}{{ (track_data.length.split(':')[0] | int * 60 + track_data.length.split(':')[1] | int) * 1.4 * font_scale }}px{% else %}{{ (200 * font_scale) | round(0) | int }}px{% endif %};"></div>
+        <!-- Calculate dynamic sizing -->
+        {% set available_height = 700 %}
+        {% set track_height = (available_height / half) | round(0) | int %}
+        {% set font_scale = (track_height / 117) %}
+        {% set title_font = (35 * font_scale) | round(0) | int %}
+        {% set duration_font = (24 * font_scale) | round(0) | int %}
+        {% set number_font = (35 * font_scale) | round(0) | int %}
+        {% set title_width = [200, (311 * font_scale) | round(0) | int] | max %}
+
+        <!-- Track List Left Column -->
+        <div class="track-list">
+            {% for i in range(half) %}
+                {% if tracklist %}
+                    {% set track_num = tracks[i] %}
+                    {% set track_data = tracklist[track_num] %}
+                {% else %}
+                    {% set track_num = i + 1 %}
+                    {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A', 'release_date': 'N/A'} %}
+                {% endif %}
+
+                <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
+                    <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
+                    <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: 440px;">{{ track_data.title }}</div>
+                    <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
+                    {% if track_data.release_date %}
+                        <div class="track-release-date" style="font-size: {{ (duration_font * 0.75) | round(0) | int }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.release_date }}</div>
+                    {% endif %}
+                    <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
+                    <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {{ track_data.pct if track_data.pct else 50 }}%;"></div>
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-</div>
 
-<!-- Track List Right Column -->
-<div class="track-list-right">
-    {% for i in range(half, total_tracks) %}
-        {% if tracklist %}
-            {% set track_num = tracks[i] %}
-            {% set track_data = tracklist[track_num] %}
-        {% else %}
-            {% set track_num = i + 1 %}
-            {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A'} %}
-        {% endif %}
+        <!-- Track List Right Column -->
+        <div class="track-list-right">
+            {% for i in range(half, total_tracks) %}
+                {% if tracklist %}
+                    {% set track_num = tracks[i] %}
+                    {% set track_data = tracklist[track_num] %}
+                {% else %}
+                    {% set track_num = i + 1 %}
+                    {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A', 'release_date': 'N/A'} %}
+                {% endif %}
 
-    <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
-        <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
-        <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: {{ title_width }}px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ track_data.title }}</div>
-        <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
-        <div class="track-date" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{% if tracklist %}{{ track_data.get('date', 'N/A') }}{% else %}N/A{% endif %}</div>
-        <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
-        <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {% if tracklist and track_data.length != 'N/A' %}{{ (track_data.length.split(':')[0] | int * 60 + track_data.length.split(':')[1] | int) * 1.4 * font_scale }}px{% else %}{{ (200 * font_scale) | round(0) | int }}px{% endif %};"></div>
-    </div>
-    {% endfor %}
-</div>
-        {%  if release_date %}
-            <!-- Album Information Footer -->
-            <div class="album-info">
-                <div class="info-item">
-                    <div class="info-label">Release Date</div>
-                    <div class="info-value">{{release_date}}</div>
+                <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
+                    <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
+                    <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: 440px;">{{ track_data.title }}</div>
+                    <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
+                    {% if track_data.release_date %}
+                        <div class="track-release-date" style="font-size: {{ (duration_font * 0.75) | round(0) | int }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.release_date }}</div>
+                    {% endif %}
+                    <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
+                    <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {{ track_data.pct if track_data.pct else 50 }}%;"></div>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Run Time</div>
-                    <div class="info-value">{{run_time}}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Track Count</div>
-                    <div class="info-value">{{track_count}}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Genre</div>
-                    <div class="info-value">{{genre}}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Format</div>
-                    <div class="info-value">{{format}}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Type</div>
-                    <div class="info-value">{{type8}</div>
-                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Album Information Footer -->
+        <div class="album-info">
+            <div class="info-item">
+                <div class="info-label">Release Date</div>
+                <div class="info-value">{{date}}</div>
             </div>
-        {%  else %}
-            <!-- Album Information Footer -->
-            <div class="album-info">
-
-                <div class="info-item">
-                    <div class="info-label">Release Date</div>
-                    <div class="info-value">N/A</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Run Time</div>
-                    <div class="info-value">N/A</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Track Count</div>
-                    <div class="info-value">N/A</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Genre</div>
-                    <div class="info-value">N/A</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Format</div>
-                    <div class="info-value">N/A</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Type</div>
-                    <div class="info-value">N/A</div>
-                </div>
+            <div class="info-item">
+                <div class="info-label">Run Time</div>
+                <div class="info-value">{{run_time}}</div>
             </div>
-        {%  endif %}
+            <div class="info-item">
+                <div class="info-label">Track Count</div>
+                <div class="info-value">{{track_count}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Country</div>
+                <div class="info-value">{{country}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Format</div>
+                <div class="info-value">{{format}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Type</div>
+                <div class="info-value">{{type}}</div>
+            </div>
+        </div>
 
         <!-- Barcode Area -->
         <div class="barcode-image">
+            <img src="{{ barcode_src }}">
         </div>
     </div>
+
+    <script>
+      async function fitAlbumTitleToCover() {
+        const cover = document.querySelector('.album-cover');
+        const title = document.querySelector('.album-title');
+        if (!cover || !title) return;
+
+        // wait for fonts so measurements are accurate
+        if (document.fonts && document.fonts.ready) {
+          try { await document.fonts.ready; } catch(e) {}
+        }
+
+        const maxWidth = cover.clientWidth;   // 680px in your CSS
+        const minSize = 12;                   // allow going smaller if needed
+        const maxSize = 96;
+
+        title.style.whiteSpace = 'nowrap';    // force single line
+        title.style.overflow = 'visible';     // let us measure true width
+        title.style.fontSize = maxSize + 'px';
+
+        // binary search the largest size that fits
+        let lo = minSize, hi = maxSize, best = minSize;
+        while (lo <= hi) {
+          const mid = Math.floor((lo + hi) / 2);
+          title.style.fontSize = mid + 'px';
+          // force a reflow so scrollWidth is fresh
+          void title.offsetWidth;
+          if (title.scrollWidth <= maxWidth) {
+            best = mid;
+            lo = mid + 1;
+          } else {
+            hi = mid - 1;
+          }
+        }
+        title.style.fontSize = best + 'px';
+        title.style.overflow = 'hidden';      // restore your clipping
+      }
+
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          fitAlbumTitleToCover();
+          adjustTrackTitleSize();  // keep your existing function
+        }, 100);
+      });
+
+
+
+        function adjustTrackTitleSize() {
+            const trackTitles = document.querySelectorAll('.track-title');
+            const maxWidth = 440;
+            const maxHeight = 45;
+            let globalFontSize = 35;
+            let needsWrapping = false;
+
+            // First pass: find the minimum font size needed across all tracks
+            trackTitles.forEach(title => {
+                title.style.whiteSpace = 'nowrap';
+                let fontSize = 35;
+                title.style.fontSize = fontSize + 'px';
+
+                // Find minimum font size for this track
+                while (fontSize >= 18 && title.scrollWidth > maxWidth) {
+                    fontSize -= 1;
+                    title.style.fontSize = fontSize + 'px';
+                }
+
+                // Track the smallest font size needed
+                globalFontSize = Math.min(globalFontSize, fontSize);
+
+                // Check if any track needs wrapping even at minimum font
+                if (fontSize <= 18 && title.scrollWidth > maxWidth) {
+                    needsWrapping = true;
+                }
+            });
+
+            // Second pass: apply uniform font size and wrapping to all tracks
+            trackTitles.forEach(title => {
+                if (needsWrapping) {
+                    title.style.fontSize = Math.max(14, globalFontSize * 0.85) + 'px';
+                    title.style.whiteSpace = 'normal';
+                } else {
+                    title.style.fontSize = globalFontSize + 'px';
+                    title.style.whiteSpace = 'nowrap';
+                }
+            });
+        }
+
+        window.addEventListener('load', function() {
+            // Small delay to ensure all content is rendered
+            setTimeout(() => {
+                adjustAlbumTitleSize();
+                adjustTrackTitleSize();
+            }, 100);
+        });
+    </script>
 </body>
 </html>
