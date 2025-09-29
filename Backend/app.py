@@ -111,7 +111,7 @@ def createList(album_list):
     for release in releases_data:
         mbid = release['MBID']
         # get the cover image
-        cover_image = cover_results.get(mbid) or fallback_cover_data_uri()
+        cover_image = cover_results.get(mbid)
 
         # if the cover image exists
         if cover_image:
