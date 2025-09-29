@@ -422,13 +422,47 @@
         clone.style.width = '2060px';
         clone.style.height = '1440px';
 
-        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
-          .map(node => node.outerHTML)
-          .join('');
+        const measurer = document.createElement('div');
+        measurer.style.position = 'absolute';
+        measurer.style.left = '-99999px';
+        measurer.style.top = '-99999px';
+        measurer.style.width = '2060px';
+        measurer.style.height = '1440px';
+        measurer.style.visibility = 'hidden';
+        document.body.appendChild(measurer);
+        measurer.appendChild(clone);
+
+        const cloneRect = clone.getBoundingClientRect();
+        let minTop = cloneRect.height;
+        let maxBottom = 0;
+        clone.querySelectorAll('*').forEach(node => {
+          if (!(node instanceof Element)) return;
+          const rect = node.getBoundingClientRect();
+          const topOffset = rect.top - cloneRect.top;
+          const bottomOffset = rect.bottom - cloneRect.top;
+          minTop = Math.min(minTop, topOffset);
+          maxBottom = Math.max(maxBottom, bottomOffset);
+        });
+
+        if (!Number.isFinite(minTop)) {
+          minTop = 0;
+        }
+        if (!Number.isFinite(maxBottom) || maxBottom === 0) {
+          maxBottom = cloneRect.height;
+        }
+
+        const topPadding = Math.max(0, minTop);
+        const bottomPadding = Math.max(0, cloneRect.height - maxBottom);
+        const delta = (bottomPadding - topPadding) / 2;
+        clone.style.transform = `translateY(${delta}px)`;
+
+        measurer.remove();
 
         const foreignBody = document.createElement('div');
         foreignBody.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-        foreignBody.innerHTML = `${styles}${clone.outerHTML}`;
+        const styleNodes = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'));
+        styleNodes.forEach(node => foreignBody.appendChild(node.cloneNode(true)));
+        foreignBody.appendChild(clone);
 
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
@@ -444,8 +478,7 @@
 
         const serializer = new XMLSerializer();
         const svgMarkup = serializer.serializeToString(svg);
-        const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
+        const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
@@ -460,7 +493,6 @@
             ctx.fillStyle = '#FFFAEC';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(img, 0, 0);
-            URL.revokeObjectURL(url);
 
             const titleEl = document.querySelector('.album-title');
             const rawTitle = titleEl ? titleEl.textContent.trim() : '';
@@ -484,16 +516,14 @@
           } catch (err) {
             console.error(err);
             alert('Unable to prepare download.');
-            URL.revokeObjectURL(url);
           }
         };
 
         img.onerror = () => {
-          URL.revokeObjectURL(url);
           alert('Unable to prepare download.');
         };
 
-        img.src = url;
+        img.src = svgUrl;
       }
 
       window.downloadWallpaper = downloadWallpaper;
