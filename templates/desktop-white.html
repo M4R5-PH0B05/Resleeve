@@ -17,15 +17,38 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            position: relative;
+            min-height: 100vh;
         }
 
         .container {
             width: 2060px;
             height: 1440px;
             background: #FFFAEC;
-            position: relative;
+            position: absolute;
+            top: calc(50% - 210px);
+            left: calc(50% - 515px);
             transform-origin: 0 0;
             transform: scale(0.5);
+        }
+
+        #download-button {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 6px;
+            background: #000000;
+            color: #ffffff;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        #download-button:hover {
+            opacity: 0.85;
         }
 
         .album-cover {
@@ -241,57 +264,9 @@
             height: 8px;
         }
     </style>
-    <script>
-        function adjustTrackTitleSize() {
-            const trackTitles = document.querySelectorAll('.track-title');
-            const maxWidth = 440;
-            const maxHeight = 45;
-            let globalFontSize = 35;
-            let needsWrapping = false;
-
-            // First pass: find the minimum font size needed across all tracks
-            trackTitles.forEach(title => {
-                title.style.whiteSpace = 'nowrap';
-                let fontSize = 35;
-                title.style.fontSize = fontSize + 'px';
-
-                // Find minimum font size for this track
-                while (fontSize >= 18 && title.scrollWidth > maxWidth) {
-                    fontSize -= 1;
-                    title.style.fontSize = fontSize + 'px';
-                }
-
-                // Track the smallest font size needed
-                globalFontSize = Math.min(globalFontSize, fontSize);
-
-                // Check if any track needs wrapping even at minimum font
-                if (fontSize <= 18 && title.scrollWidth > maxWidth) {
-                    needsWrapping = true;
-                }
-            });
-
-            // Second pass: apply uniform font size and wrapping to all tracks
-            trackTitles.forEach(title => {
-                if (needsWrapping) {
-                    title.style.fontSize = Math.max(14, globalFontSize * 0.85) + 'px';
-                    title.style.whiteSpace = 'normal';
-                } else {
-                    title.style.fontSize = globalFontSize + 'px';
-                    title.style.whiteSpace = 'nowrap';
-                }
-            });
-        }
-
-        window.addEventListener('load', function() {
-            // Small delay to ensure all content is rendered
-            setTimeout(() => {
-                adjustAlbumTitleSize();
-                adjustTrackTitleSize();
-            }, 100);
-        });
-    </script>
 </head>
 <body>
+    <button id="download-button" type="button" onclick="downloadWallpaper()">Download Wallpaper</button>
     <div class="container">
         <!-- Album Cover -->
         <div class="album-cover"></div>
@@ -420,30 +395,146 @@
     </div>
 
     <script>
+      function sanitizeFilename(name) {
+        return name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+
+      function triggerDownloadUrl(href, fileName, revoke = false) {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = href;
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (revoke) {
+          setTimeout(() => URL.revokeObjectURL(href), 1000);
+        }
+      }
+
+      async function downloadWallpaper() {
+        const source = document.querySelector('.container');
+        if (!source) {
+          alert('Template not ready for download.');
+          return;
+        }
+
+        const clone = source.cloneNode(true);
+        clone.style.position = 'relative';
+        clone.style.top = '0';
+        clone.style.left = '0';
+        clone.style.transform = 'none';
+        clone.style.transformOrigin = '0 0';
+        clone.style.width = '2060px';
+        clone.style.height = '1440px';
+
+        const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+          .map(node => node.outerHTML)
+          .join('');
+
+        const foreignBody = document.createElement('div');
+        foreignBody.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+        foreignBody.innerHTML = `${styles}${clone.outerHTML}`;
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        svg.setAttribute('width', '2060');
+        svg.setAttribute('height', '1440');
+        svg.setAttribute('viewBox', '0 0 2060 1440');
+
+        const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+        foreignObject.setAttribute('width', '100%');
+        foreignObject.setAttribute('height', '100%');
+        foreignObject.appendChild(foreignBody);
+        svg.appendChild(foreignObject);
+
+        const serializer = new XMLSerializer();
+        const svgMarkup = serializer.serializeToString(svg);
+        const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.decoding = 'sync';
+
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 2060;
+            canvas.height = 1440;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFAEC';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0);
+            URL.revokeObjectURL(url);
+
+            const titleEl = document.querySelector('.album-title');
+            const rawTitle = titleEl ? titleEl.textContent.trim() : '';
+            const safeTitle = sanitizeFilename(rawTitle) || 'resleeve';
+            const fileName = `${safeTitle}-wallpaper.png`;
+
+            const finish = href => triggerDownloadUrl(href, fileName, href.startsWith('blob:'));
+
+            if (canvas.toBlob) {
+              canvas.toBlob(pngBlob => {
+                if (pngBlob) {
+                  const downloadUrl = URL.createObjectURL(pngBlob);
+                  finish(downloadUrl);
+                } else {
+                  finish(canvas.toDataURL('image/png'));
+                }
+              }, 'image/png');
+            } else {
+              finish(canvas.toDataURL('image/png'));
+            }
+          } catch (err) {
+            console.error(err);
+            alert('Unable to prepare download.');
+            URL.revokeObjectURL(url);
+          }
+        };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          alert('Unable to prepare download.');
+        };
+
+        img.src = url;
+      }
+
+      window.downloadWallpaper = downloadWallpaper;
+
       async function fitAlbumTitleToCover() {
         const cover = document.querySelector('.album-cover');
         const title = document.querySelector('.album-title');
         if (!cover || !title) return;
 
-        // wait for fonts so measurements are accurate
         if (document.fonts && document.fonts.ready) {
-          try { await document.fonts.ready; } catch(e) {}
+          try {
+            await document.fonts.ready;
+          } catch (err) {
+            console.warn('Font loading issue:', err);
+          }
         }
 
-        const maxWidth = cover.clientWidth;   // 680px in your CSS
-        const minSize = 12;                   // allow going smaller if needed
+        const maxWidth = cover.clientWidth;
+        const minSize = 12;
         const maxSize = 96;
 
-        title.style.whiteSpace = 'nowrap';    // force single line
-        title.style.overflow = 'visible';     // let us measure true width
-        title.style.fontSize = maxSize + 'px';
+        title.style.whiteSpace = 'nowrap';
+        title.style.overflow = 'visible';
+        title.style.fontSize = `${maxSize}px`;
 
-        // binary search the largest size that fits
-        let lo = minSize, hi = maxSize, best = minSize;
+        let lo = minSize;
+        let hi = maxSize;
+        let best = minSize;
+
         while (lo <= hi) {
           const mid = Math.floor((lo + hi) / 2);
-          title.style.fontSize = mid + 'px';
-          // force a reflow so scrollWidth is fresh
+          title.style.fontSize = `${mid}px`;
           void title.offsetWidth;
           if (title.scrollWidth <= maxWidth) {
             best = mid;
@@ -452,66 +543,52 @@
             hi = mid - 1;
           }
         }
-        title.style.fontSize = best + 'px';
-        title.style.overflow = 'hidden';      // restore your clipping
+
+        title.style.fontSize = `${best}px`;
+        title.style.overflow = 'hidden';
+      }
+
+      function adjustAlbumTitleSize() {
+        fitAlbumTitleToCover();
+      }
+
+      function adjustTrackTitleSize() {
+        const trackTitles = document.querySelectorAll('.track-title');
+        const maxWidth = 440;
+        let globalFontSize = 35;
+        let needsWrapping = false;
+
+        trackTitles.forEach(title => {
+          title.style.whiteSpace = 'nowrap';
+          let fontSize = 35;
+          title.style.fontSize = `${fontSize}px`;
+          while (fontSize >= 18 && title.scrollWidth > maxWidth) {
+            fontSize -= 1;
+            title.style.fontSize = `${fontSize}px`;
+          }
+          globalFontSize = Math.min(globalFontSize, fontSize);
+          if (fontSize <= 18 && title.scrollWidth > maxWidth) {
+            needsWrapping = true;
+          }
+        });
+
+        trackTitles.forEach(title => {
+          if (needsWrapping) {
+            title.style.fontSize = `${Math.max(14, Math.floor(globalFontSize * 0.85))}px`;
+            title.style.whiteSpace = 'normal';
+          } else {
+            title.style.fontSize = `${globalFontSize}px`;
+            title.style.whiteSpace = 'nowrap';
+          }
+        });
       }
 
       window.addEventListener('load', () => {
         setTimeout(() => {
-          fitAlbumTitleToCover();
-          adjustTrackTitleSize();  // keep your existing function
+          adjustAlbumTitleSize();
+          adjustTrackTitleSize();
         }, 100);
       });
-
-
-
-        function adjustTrackTitleSize() {
-            const trackTitles = document.querySelectorAll('.track-title');
-            const maxWidth = 440;
-            const maxHeight = 45;
-            let globalFontSize = 35;
-            let needsWrapping = false;
-
-            // First pass: find the minimum font size needed across all tracks
-            trackTitles.forEach(title => {
-                title.style.whiteSpace = 'nowrap';
-                let fontSize = 35;
-                title.style.fontSize = fontSize + 'px';
-
-                // Find minimum font size for this track
-                while (fontSize >= 18 && title.scrollWidth > maxWidth) {
-                    fontSize -= 1;
-                    title.style.fontSize = fontSize + 'px';
-                }
-
-                // Track the smallest font size needed
-                globalFontSize = Math.min(globalFontSize, fontSize);
-
-                // Check if any track needs wrapping even at minimum font
-                if (fontSize <= 18 && title.scrollWidth > maxWidth) {
-                    needsWrapping = true;
-                }
-            });
-
-            // Second pass: apply uniform font size and wrapping to all tracks
-            trackTitles.forEach(title => {
-                if (needsWrapping) {
-                    title.style.fontSize = Math.max(14, globalFontSize * 0.85) + 'px';
-                    title.style.whiteSpace = 'normal';
-                } else {
-                    title.style.fontSize = globalFontSize + 'px';
-                    title.style.whiteSpace = 'nowrap';
-                }
-            });
-        }
-
-        window.addEventListener('load', function() {
-            // Small delay to ensure all content is rendered
-            setTimeout(() => {
-                adjustAlbumTitleSize();
-                adjustTrackTitleSize();
-            }, 100);
-        });
     </script>
 </body>
 </html>

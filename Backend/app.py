@@ -19,7 +19,7 @@ app.secret_key = 'Testing123!'
 
 
 def fetch_single_cover(mbid):
-    """Helper function to fetch a single cover art"""
+    # Fetches a single album cover as opposed to multiple like the usual function
     return mbid, get_album_cover(mbid)
 
 
@@ -44,6 +44,7 @@ def createList(album_list):
         mbid = release['id']
         track_count = release['track-count']
         title = release['title']
+        # Some entries don't have these variables - make sure they do not raise a ValueError if they do not exist
         try:
             barcode = release['barcode']
         except:
@@ -53,10 +54,12 @@ def createList(album_list):
         except:
             format = None
         release_type = release['release-group']['primary-type']
+        # The date variable can be found in two different places - so check both
         date = release.get('date')
         if date == None:
             date = release.get('release-events', [{}])[0].get('date')
 
+        # Create the dictionary of all of the album data
         releases_data.append({
             'Artist': artist,
             'Title': title,
@@ -84,10 +87,13 @@ def createList(album_list):
     parsed_releases = {}
     count = 1
 
+    # for all of the releases
     for release in releases_data:
         mbid = release['MBID']
+        # get the cover image
         cover_image = cover_results.get(mbid)
 
+        # if the cover image exists
         if cover_image is not None:
             release['Cover Image'] = cover_image
             parsed_releases[count] = release
@@ -96,9 +102,12 @@ def createList(album_list):
     return parsed_releases
 
 
+# change the barcode string into an actual barcode
 def barcode_data_uri(code: str) -> str:
+    # format it correctly ( adds a leading 0 )
     fmt = UPCA if len(code) == 12 else EAN13
     writer = ImageWriter()
+    # customisation options for the final output image
     opts = {
         "write_text": False,  # ← bars only, no numbers
         "quiet_zone": 0.0,  # minimal side margins
@@ -107,25 +116,22 @@ def barcode_data_uri(code: str) -> str:
         "dpi": 300,
         "background": (255, 250, 236)
     }
+    # encodes the image to a base64 string
     buf = io.BytesIO()
     fmt(code, writer=writer).write(buf, opts)
     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
     return f"data:image/png;base64,{b64}"
 
-
+# extracts the 5 most prominent colours from the album cover
 def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
-    """
-    Returns 5 CSS hex colours highlighting prominent hues (accents included),
-    not just the most common neutrals.
-    Order: lightest, three mids, darkest (tweak at the end if you prefer).
-    """
-    # --- load from data URI ---
+
+    #  load from data URI 
     b64 = data_uri.split(",", 1)[1]
     img = Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
     if max(img.size) > max_side:
         img.thumbnail((max_side, max_side), Image.LANCZOS)
 
-    # --- quantize to reduce unique colours (stable & fast) ---
+    #  quantize to reduce unique colours (stable & fast) 
     q = img.quantize(colors=k_quant, method=Image.MEDIANCUT)
     palette = q.getpalette()[:k_quant * 3]
     palette = [tuple(palette[i:i + 3]) for i in range(0, len(palette), 3)]
@@ -139,7 +145,7 @@ def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
     if not colors:
         return ["#000000"] * k_out
 
-    # --- compute saturation + luminance for each palette colour ---
+    #  compute saturation + luminance for each palette colour 
     def luminance(rgb):
         r, g, b = [c / 255.0 for c in rgb]
         return 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -149,7 +155,7 @@ def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
     lums = np.array([luminance(c) for _, c in colors], dtype=np.float32)
     freqs = np.array([n for n, _ in colors], dtype=np.float32)
 
-    # --- prominence score: frequency * (saturation boosted) ---
+    #  prominence score: frequency * (saturation boosted) 
     # tweak exponents to taste; this strongly lifts vivid colours
     score = freqs * (0.25 + sats) ** 2.0
 
@@ -194,19 +200,19 @@ def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
     # to CSS hex
     return [_hex(c) for c in final]
 
-
+# converts an rgb value to a hex value
 def _hex(rgb):
     r, g, b = map(int, rgb)
     return f"#{r:02x}{g:02x}{b:02x}"
 
-
+# converts ms to formatted minutes and seconds
 def ms_to_min_sec(ms):
     total_seconds = ms // 1000
     minutes = total_seconds // 60
     seconds = total_seconds % 60
     return f"{minutes}:{seconds:02d}"
 
-
+# creates the formatted tracklist
 def createTracklist(json_tracklist):
     tracklist = {}
     release_length = 0
@@ -217,6 +223,7 @@ def createTracklist(json_tracklist):
         pos = int(item['position'])  # numeric sort later
         rec_len = item['recording'].get('length')  # ms or None
 
+        # setting the length of the recording
         if rec_len is None:
             length_str = 'N/A'
             seconds = None
@@ -245,7 +252,9 @@ def createTracklist(json_tracklist):
 def index():
     # Form Submission
     if request.method == 'POST':
+        # If the FORM is the Initial Selection
         if 'selected_MBID' in request.form:
+            # Set variables that will be passed through
             selected_album_information = []
             selected_artist = request.form['selected_artist']
             selected_album = request.form['selected_album']
@@ -256,6 +265,7 @@ def index():
             selected_format = request.form['selected_format']
             selected_type = request.form['selected_type']
             selected_barcode = request.form['selected_barcode']
+            # Adds the variables to the list of album information
             selected_album_information.extend([
                 selected_artist,
                 selected_album,
@@ -267,10 +277,12 @@ def index():
                 selected_type,
                 selected_barcode
             ])
+            # dynamically load the album cover
             selected_cover_image = get_album_cover(selected_mbid)
             json_tracklist = get_tracklist(selected_mbid).json()
             # pprint(json_tracklist)
             tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
+            # return the index.html template but with the selected album on the right of the screen
             return render_template('index.html',
                                    selected_cover_image=selected_cover_image,
                                    selected_artist=selected_artist,
@@ -279,7 +291,9 @@ def index():
                                    selected_track_count=selected_track_count,
                                    selected_mbid=selected_mbid, tracklist=tracklist,
                                    selected_details=selected_album_information)
+        # if the album has been fully selected
         if 'selected_details' in request.form:
+            # set variables
             selected_details = request.form['selected_details']
             details = ast.literal_eval(selected_details)
             json_tracklist = get_tracklist(details[5]).json()
@@ -287,6 +301,7 @@ def index():
             # pprint(json_tracklist)
             tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
             colours = colourExtractor(cover_image)
+            # return the template with the completed variables
             return render_template('desktop-white.html', artist=details[0], album=details[1],
                                    date=details[2], country=details[3], track_count=details[4], format=details[6],
                                    type=details[7],
@@ -304,14 +319,8 @@ def index():
             # pprint(album_list)
             parsed_albums = createList(album_list)
             return render_template('index.html', releases=parsed_albums)
-
+    # if no routes are matched, return default template
     return render_template('index.html')
-
-
-@app.route('/template')
-def template():
-    pass
-
 
 if __name__ == '__main__':
     app.run(debug=True)
