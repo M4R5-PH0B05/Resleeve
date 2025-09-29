@@ -487,17 +487,26 @@
         img.onload = () => {
           try {
             const canvas = document.createElement('canvas');
-            canvas.width = 2060;
-            canvas.height = 1440;
+            canvas.width = 3840;
+            canvas.height = 2160;
             const ctx = canvas.getContext('2d');
             ctx.fillStyle = '#FFFAEC';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0);
+
+            const srcWidth = 2060;
+            const srcHeight = 1440;
+            const scale = Math.min(canvas.width / srcWidth, canvas.height / srcHeight);
+            const drawWidth = srcWidth * scale;
+            const drawHeight = srcHeight * scale;
+            const offsetX = (canvas.width - drawWidth) / 2;
+            const offsetY = (canvas.height - drawHeight) / 2;
+
+            ctx.drawImage(img, 0, 0, srcWidth, srcHeight, offsetX, offsetY, drawWidth, drawHeight);
 
             const titleEl = document.querySelector('.album-title');
             const rawTitle = titleEl ? titleEl.textContent.trim() : '';
-             const safeTitle = sanitizeFilename(rawTitle) || 'resleeve';
-            const fileName = `${safeTitle}-wallpaper.png`;
+            const safeTitle = sanitizeFilename(rawTitle) || 'resleeve';
+            const fileName = `${safeTitle || 'resleeve'}-wallpaper.png`;
 
             const finish = href => triggerDownloadUrl(href, fileName, href.startsWith('blob:'));
 
