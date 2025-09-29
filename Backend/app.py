@@ -21,6 +21,7 @@ app.secret_key = 'Testing123!'
 
 DEFAULT_COLOURS = ["#ffffff", "#d4d4d4", "#a0a0a0", "#6c6c6c", "#2c2c2c"]
 TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9SClSxIAAAAASUVORK5CYII="
+MAX_COVER_WORKERS = 4
 
 
 @lru_cache(maxsize=1)
@@ -93,7 +94,7 @@ def createList(album_list):
 
     # Second pass: fetch all covers concurrently
     cover_results = {}
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=MAX_COVER_WORKERS) as executor:
         # Submit all cover art requests
         future_to_mbid = {executor.submit(fetch_single_cover, release['MBID']): release for release in releases_data}
 
