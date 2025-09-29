@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Desktop Dark</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: #00010A;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 2060px;
+            height: 1440px;
+            background: #00010A;
+            position: absolute;
+            top: calc(50% - 210px);
+            left: calc(50% - 515px);
+            transform-origin: 0 0;
+            transform: scale(0.5);
+        }
+
+        #download-button {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #00010A;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        #download-button:hover {
+            opacity: 0.85;
+        }
+
+        .album-cover {
+            position: absolute;
+            left: 63px;
+            top: 57px;
+            width: 680px;
+            height: 680px;
+            background-image: url({{cover_image}});
+            background-color: grey;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .artist-name {
+            position: absolute;
+            left: 61px;
+            top: 767px;
+            font-family: Helvetica, sans-serif;
+            font-size: 30px;
+            font-weight: normal;
+            color: #ffffff;
+        }
+
+        .album-title {
+            position: absolute;
+            left: 56px;
+            top: 811px;
+            font-family: Helvetica, sans-serif;
+            font-size: 96px;
+            font-weight: bold;
+            color: #ffffff;
+            width: 680px;
+            overflow: hidden;
+        }
+
+        .color-1 {
+            left: 472px;
+            width: 39px;
+            height: 39px;
+            background-color: {{ colours[0] }};
+            position: absolute;
+            top: 762px;
+        }
+
+        .color-2 {
+            left: 530px;
+            width: 39px;
+            height: 39px;
+            background-color: {{ colours[1] }};
+            position: absolute;
+            top: 762px;
+        }
+
+        .color-3 {
+            left: 588px;
+            width: 39px;
+            height: 39px;
+            background-color: {{ colours[2] }};
+            position: absolute;
+            top: 762px;
+        }
+
+        .color-4 {
+            left: 646px;
+            width: 39px;
+            height: 39px;
+            background-color: {{ colours[3] }};
+            position: absolute;
+            top: 762px;
+        }
+
+        .color-5 {
+            left: 704px;
+            width: 39px;
+            height: 39px;
+            background-color: {{ colours[4] }};
+            position: absolute;
+            top: 762px;
+        }
+
+        .separator-line {
+            position: absolute;
+            left: 63px;
+            top: 941px;
+            width: 94%;
+            height: 5px;
+            background-color: #ffffff;
+        }
+
+        .track-list {
+            position: absolute;
+            left: 858px;
+            top: 57px;
+            width: 508px;
+        }
+
+        .track-item {
+            position: relative;
+            height: 117px;
+            margin-bottom: 29px;
+            overflow: hidden;
+        }
+
+        .track-number {
+            position: absolute;
+            left: 0;
+            top: 37px;
+            transform: translateY(-50%);
+            font-family: Helvetica, sans-serif;
+            font-size: 35px;
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+            width: 48px;
+        }
+
+        .track-title {
+            position: absolute;
+            left: 60px;
+            top: 15px;
+            font-family: Helvetica, sans-serif;
+            font-weight: bold;
+            color: #ffffff;
+            width: 440px;
+            line-height: 1.1;
+            height: 45px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .track-duration {
+            position: absolute;
+            left: 63px;
+            top: 74px;
+            font-family: Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: normal;
+            color: #b0b5c0;
+        }
+
+        .track-release-date {
+            position: absolute;
+            left: 180px;
+            top: 74px;
+            font-family: Helvetica, sans-serif;
+            font-size: 18px;
+            font-weight: normal;
+            color: #9ba2b0;
+        }
+
+        .track-separator {
+            position: absolute;
+            left: 62px;
+            top: 108px;
+            width: 100%;
+            height: 10px;
+            background-color: #1f2330;
+            border-radius: 5px;
+        }
+
+        .track-progress {
+            position: absolute;
+            left: 62px;
+            top: 108px;
+            height: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
+        }
+
+        .track-list-right {
+            position: absolute;
+            left: 1491px;
+            top: 57px;
+            width: 508px;
+        }
+
+        .album-info {
+            position: absolute;
+            top: 979px;
+            display: flex;
+            gap: 166px;
+            left: 404px;
+        }
+
+        .info-item {
+            text-align: left;
+        }
+
+        .info-label {
+            font-family: Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .info-value {
+            font-family: Helvetica, sans-serif;
+            font-size: 24px;
+            font-weight: normal;
+            color: #d0d4dd;
+        }
+
+        .barcode-image {
+            position: absolute;
+            left: 65px;
+            top: 960px;
+            width: 258px;
+            height: 8px;
+        }
+    </style>
+</head>
+<body>
+    <button id="download-button" type="button" onclick="downloadWallpaper()">Download Wallpaper</button>
+    <div class="container">
+        <div class="album-cover"></div>
+
+        {% if artist %}
+            <div class="artist-name">{{artist}}</div>
+            <div class="album-title">{{album}}</div>
+        {% else %}
+            <div class="artist-name">Artist</div>
+            <div class="album-title">Album</div>
+        {% endif %}
+
+        <div class="color-1"></div>
+        <div class="color-2"></div>
+        <div class="color-3"></div>
+        <div class="color-4"></div>
+        <div class="color-5"></div>
+
+        <div class="separator-line"></div>
+
+        {% if tracklist %}
+            {% set tracks = tracklist.keys() | sort %}
+            {% set total_tracks = tracks | length %}
+            {% if total_tracks > 20 %}
+                {% set tracks = tracks[:20] %}
+                {% set total_tracks = 20 %}
+            {% endif %}
+            {% set half = ((total_tracks) / 2) | round(0, 'ceil') | int %}
+        {% else %}
+            {% set total_tracks = 12 %}
+            {% set half = 6 %}
+        {% endif %}
+
+        {% set available_height = 700 %}
+        {% set track_height = (available_height / half) | round(0) | int %}
+        {% set font_scale = (track_height / 117) %}
+        {% set title_font = (35 * font_scale) | round(0) | int %}
+        {% set duration_font = (24 * font_scale) | round(0) | int %}
+        {% set number_font = (35 * font_scale) | round(0) | int %}
+        {% set title_width = [200, (311 * font_scale) | round(0) | int] | max %}
+
+        <div class="track-list">
+            {% for i in range(half) %}
+                {% if tracklist %}
+                    {% set track_num = tracks[i] %}
+                    {% set track_data = tracklist[track_num] %}
+                {% else %}
+                    {% set track_num = i + 1 %}
+                    {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A', 'release_date': 'N/A'} %}
+                {% endif %}
+
+                <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
+                    <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
+                    <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: 440px;">{{ track_data.title }}</div>
+                    <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
+                    {% if track_data.release_date %}
+                        <div class="track-release-date" style="font-size: {{ (duration_font * 0.75) | round(0) | int }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.release_date }}</div>
+                    {% endif %}
+                    <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
+                    <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {{ track_data.pct if track_data.pct else 50 }}%;"></div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="track-list-right">
+            {% for i in range(half, total_tracks) %}
+                {% if tracklist %}
+                    {% set track_num = tracks[i] %}
+                    {% set track_data = tracklist[track_num] %}
+                {% else %}
+                    {% set track_num = i + 1 %}
+                    {% set track_data = {'title': 'Track ' + (track_num | string), 'length': 'N/A', 'release_date': 'N/A'} %}
+                {% endif %}
+
+                <div class="track-item" style="height: {{ track_height }}px; margin-bottom: {{ (29 * font_scale) | round(0) | int }}px;">
+                    <div class="track-number" style="font-size: {{ number_font }}px; top: {{ (track_height * 0.3) | round(0) | int }}px;">{{ track_num }}.</div>
+                    <div class="track-title" style="font-size: {{ title_font }}px; top: {{ (track_height * 0.13) | round(0) | int }}px; width: 440px;">{{ track_data.title }}</div>
+                    <div class="track-duration" style="font-size: {{ duration_font }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.length }}</div>
+                    {% if track_data.release_date %}
+                        <div class="track-release-date" style="font-size: {{ (duration_font * 0.75) | round(0) | int }}px; top: {{ (track_height * 0.63) | round(0) | int }}px;">{{ track_data.release_date }}</div>
+                    {% endif %}
+                    <div class="track-separator" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px;"></div>
+                    <div class="track-progress" style="top: {{ (track_height * 0.92) | round(0) | int }}px; height: {{ (10 * font_scale) | round(0) | int }}px; width: {{ track_data.pct if track_data.pct else 50 }}%;"></div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="album-info">
+            <div class="info-item">
+                <div class="info-label">Release Date</div>
+                <div class="info-value">{{date}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Run Time</div>
+                <div class="info-value">{{run_time}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Track Count</div>
+                <div class="info-value">{{track_count}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Country</div>
+                <div class="info-value">{{country}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Format</div>
+                <div class="info-value">{{format}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Type</div>
+                <div class="info-value">{{type}}</div>
+            </div>
+        </div>
+
+        <div class="barcode-image">
+            <img src="{{ barcode_src }}">
+        </div>
+    </div>
+
+    <script>
+      function sanitizeFilename(name) {
+        return name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+
+      function triggerDownloadUrl(href, fileName, revoke = false) {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = href;
+        link.rel = 'noopener';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        if (revoke) {
+          setTimeout(() => URL.revokeObjectURL(href), 1000);
+        }
+      }
+
+      async function downloadWallpaper() {
+        const source = document.querySelector('.container');
+        if (!source) {
+          alert('Template not ready for download.');
+          return;
+        }
+
+        const clone = source.cloneNode(true);
+        clone.style.position = 'relative';
+        clone.style.top = '0';
+        clone.style.left = '0';
+        clone.style.transform = 'none';
+        clone.style.transformOrigin = '0 0';
+        clone.style.width = '2060px';
+        clone.style.height = '1440px';
+
+        const measurer = document.createElement('div');
+        measurer.style.position = 'absolute';
+        measurer.style.left = '-99999px';
+        measurer.style.top = '-99999px';
+        measurer.style.width = '2060px';
+        measurer.style.height = '1440px';
+        measurer.style.visibility = 'hidden';
+        document.body.appendChild(measurer);
+        measurer.appendChild(clone);
+
+        const cloneRect = clone.getBoundingClientRect();
+        let minTop = cloneRect.height;
+        let maxBottom = 0;
+        clone.querySelectorAll('*').forEach(node => {
+          if (!(node instanceof Element)) return;
+          const rect = node.getBoundingClientRect();
+          const topOffset = rect.top - cloneRect.top;
+          const bottomOffset = rect.bottom - cloneRect.top;
+          minTop = Math.min(minTop, topOffset);
+          maxBottom = Math.max(maxBottom, bottomOffset);
+        });
+
+        if (!Number.isFinite(minTop)) {
+          minTop = 0;
+        }
+        if (!Number.isFinite(maxBottom) || maxBottom === 0) {
+          maxBottom = cloneRect.height;
+        }
+
+        const topPadding = Math.max(0, minTop);
+        const bottomPadding = Math.max(0, cloneRect.height - maxBottom);
+        const delta = (bottomPadding - topPadding) / 2;
+        clone.style.transform = `translateY(${delta}px)`;
+
+        measurer.remove();
+
+        const foreignBody = document.createElement('div');
+        foreignBody.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+        const styleNodes = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'));
+        styleNodes.forEach(node => foreignBody.appendChild(node.cloneNode(true)));
+        foreignBody.appendChild(clone);
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        svg.setAttribute('width', '2060');
+        svg.setAttribute('height', '1440');
+        svg.setAttribute('viewBox', '0 0 2060 1440');
+
+        const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+        foreignObject.setAttribute('width', '100%');
+        foreignObject.setAttribute('height', '100%');
+        foreignObject.appendChild(foreignBody);
+        svg.appendChild(foreignObject);
+
+        const serializer = new XMLSerializer();
+        const svgMarkup = serializer.serializeToString(svg);
+        const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.decoding = 'sync';
+
+        img.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 3840;
+            canvas.height = 2160;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#00010A';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const srcWidth = 2060;
+            const srcHeight = 1440;
+            const scale = Math.min(canvas.width / srcWidth, canvas.height / srcHeight);
+            const drawWidth = srcWidth * scale;
+            const drawHeight = srcHeight * scale;
+            const offsetX = (canvas.width - drawWidth) / 2;
+            const offsetY = (canvas.height - drawHeight) / 2;
+
+            ctx.drawImage(img, 0, 0, srcWidth, srcHeight, offsetX, offsetY, drawWidth, drawHeight);
+
+            const titleEl = document.querySelector('.album-title');
+            const rawTitle = titleEl ? titleEl.textContent.trim() : '';
+            const safeTitle = sanitizeFilename(rawTitle) || 'resleeve';
+            const fileName = `${safeTitle || 'resleeve'}-wallpaper.png`;
+
+            const finish = href => triggerDownloadUrl(href, fileName, href.startsWith('blob:'));
+
+            if (canvas.toBlob) {
+              canvas.toBlob(pngBlob => {
+                if (pngBlob) {
+                  const downloadUrl = URL.createObjectURL(pngBlob);
+                  finish(downloadUrl);
+                } else {
+                  finish(canvas.toDataURL('image/png'));
+                }
+              }, 'image/png');
+            } else {
+              finish(canvas.toDataURL('image/png'));
+            }
+          } catch (err) {
+            console.error(err);
+            alert('Unable to prepare download.');
+          }
+        };
+
+        img.onerror = () => {
+          alert('Unable to prepare download.');
+        };
+
+        img.src = svgUrl;
+      }
+
+      window.downloadWallpaper = downloadWallpaper;
+
+      async function fitAlbumTitleToCover() {
+        const cover = document.querySelector('.album-cover');
+        const title = document.querySelector('.album-title');
+        if (!cover || !title) return;
+
+        if (document.fonts && document.fonts.ready) {
+          try {
+            await document.fonts.ready;
+          } catch (err) {
+            console.warn('Font loading issue:', err);
+          }
+        }
+
+        const maxWidth = cover.clientWidth;
+        const minSize = 12;
+        const maxSize = 96;
+
+        title.style.whiteSpace = 'nowrap';
+        title.style.overflow = 'visible';
+        title.style.fontSize = `${maxSize}px`;
+
+        let lo = minSize;
+        let hi = maxSize;
+        let best = minSize;
+
+        while (lo <= hi) {
+          const mid = Math.floor((lo + hi) / 2);
+          title.style.fontSize = `${mid}px`;
+          void title.offsetWidth;
+          if (title.scrollWidth <= maxWidth) {
+            best = mid;
+            lo = mid + 1;
+          } else {
+            hi = mid - 1;
+          }
+        }
+
+        title.style.fontSize = `${best}px`;
+        title.style.overflow = 'hidden';
+      }
+
+      function adjustAlbumTitleSize() {
+        fitAlbumTitleToCover();
+      }
+
+      function adjustTrackTitleSize() {
+        const trackTitles = document.querySelectorAll('.track-title');
+        const maxWidth = 440;
+        let globalFontSize = 35;
+        let needsWrapping = false;
+
+        trackTitles.forEach(title => {
+          title.style.whiteSpace = 'nowrap';
+          let fontSize = 35;
+          title.style.fontSize = `${fontSize}px`;
+          while (fontSize >= 18 && title.scrollWidth > maxWidth) {
+            fontSize -= 1;
+            title.style.fontSize = `${fontSize}px`;
+          }
+          globalFontSize = Math.min(globalFontSize, fontSize);
+          if (fontSize <= 18 && title.scrollWidth > maxWidth) {
+            needsWrapping = true;
+          }
+        });
+
+        trackTitles.forEach(title => {
+          if (needsWrapping) {
+            title.style.fontSize = `${Math.max(14, Math.floor(globalFontSize * 0.85))}px`;
+            title.style.whiteSpace = 'normal';
+          } else {
+            title.style.fontSize = `${globalFontSize}px`;
+            title.style.whiteSpace = 'nowrap';
+          }
+        });
+      }
+
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          adjustAlbumTitleSize();
+          adjustTrackTitleSize();
+        }, 100);
+      });
+    </script>
+</body>
+</html>
