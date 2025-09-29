@@ -2,6 +2,7 @@
 import base64
 
 import requests
+from requests import RequestException
 import json
 import pprintpp
 # FUNCTIONS & CLASSES
@@ -42,16 +43,23 @@ def get_tracklist(mbid):
     url = f'https://musicbrainz.org/ws/2/release/{mbid}'
     headers = {'User-Agent': 'Resleeve/1.0'}
 
-    return requests.get(url, headers=headers, params={
-        "fmt": "json",
-        "inc": "recordings"
-    })
+    try:
+        return requests.get(url, headers=headers, params={
+            "fmt": "json",
+            "inc": "recordings"
+        }, timeout=10)
+    except RequestException:
+        return None
 
 # Get album cover art as base64 encoded string
 def get_album_cover(mbid):
     cover_url = f"https://coverartarchive.org/release/{mbid}/front"
     headers = {'User-Agent': 'Resleeve/1.0'}
-    response = requests.get(cover_url, headers=headers)
+
+    try:
+        response = requests.get(cover_url, headers=headers, timeout=10)
+    except RequestException:
+        return None
 
     if response.status_code == 200:
         b64_image = base64.b64encode(response.content).decode('utf-8')
@@ -61,4 +69,3 @@ def get_album_cover(mbid):
 
 
 # print(search_albums("Bring me the horizon","Post Human: Survival Horror").json())
-

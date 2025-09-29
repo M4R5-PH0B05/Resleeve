@@ -268,10 +268,8 @@
 <body>
     <button id="download-button" type="button" onclick="downloadWallpaper()">Download Wallpaper</button>
     <div class="container">
-        <!-- Album Cover -->
         <div class="album-cover"></div>
 
-        <!-- Artist and Album Title -->
         {% if artist %}
             <div class="artist-name">{{artist}}</div>
             <div class="album-title">{{album}}</div>
@@ -280,14 +278,12 @@
             <div class="album-title">Album</div>
         {% endif %}
 
-        <!-- Color Palette -->
         <div class="color-1"></div>
         <div class="color-2"></div>
         <div class="color-3"></div>
         <div class="color-4"></div>
         <div class="color-5"></div>
 
-        <!-- Separator Line -->
         <div class="separator-line"></div>
 
         {% if tracklist %}
@@ -303,7 +299,6 @@
             {% set half = 6 %}
         {% endif %}
 
-        <!-- Calculate dynamic sizing -->
         {% set available_height = 700 %}
         {% set track_height = (available_height / half) | round(0) | int %}
         {% set font_scale = (track_height / 117) %}
@@ -312,7 +307,6 @@
         {% set number_font = (35 * font_scale) | round(0) | int %}
         {% set title_width = [200, (311 * font_scale) | round(0) | int] | max %}
 
-        <!-- Track List Left Column -->
         <div class="track-list">
             {% for i in range(half) %}
                 {% if tracklist %}
@@ -336,7 +330,6 @@
             {% endfor %}
         </div>
 
-        <!-- Track List Right Column -->
         <div class="track-list-right">
             {% for i in range(half, total_tracks) %}
                 {% if tracklist %}
@@ -360,7 +353,6 @@
             {% endfor %}
         </div>
 
-        <!-- Album Information Footer -->
         <div class="album-info">
             <div class="info-item">
                 <div class="info-label">Release Date</div>
@@ -388,7 +380,6 @@
             </div>
         </div>
 
-        <!-- Barcode Area -->
         <div class="barcode-image">
             <img src="{{ barcode_src }}">
         </div>

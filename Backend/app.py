@@ -1,8 +1,9 @@
 import flask
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request
 from api_testing import search_albums, get_tracklist, get_album_cover
 from pprintpp import pprint
 import io, base64
+import os
 from barcode import UPCA, EAN13
 from barcode.writer import ImageWriter
 from sklearn.cluster import KMeans
@@ -13,14 +14,32 @@ from collections import Counter
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
+from functools import lru_cache
 
 app = Flask(__name__, template_folder='../templates', static_folder='../static')
 app.secret_key = 'Testing123!'
 
+DEFAULT_COLOURS = ["#ffffff", "#d4d4d4", "#a0a0a0", "#6c6c6c", "#2c2c2c"]
+TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9SClSxIAAAAASUVORK5CYII="
+
+
+@lru_cache(maxsize=1)
+def fallback_cover_data_uri():
+    try:
+        fallback_path = os.path.join(app.static_folder, 'fallen.jpg')
+        with open(fallback_path, 'rb') as image_file:
+            encoded = base64.b64encode(image_file.read()).decode('ascii')
+        return f"data:image/jpeg;base64,{encoded}"
+    except Exception:
+        return TRANSPARENT_PIXEL
+
 
 def fetch_single_cover(mbid):
     # Fetches a single album cover as opposed to multiple like the usual function
-    return mbid, get_album_cover(mbid)
+    try:
+        return mbid, get_album_cover(mbid)
+    except Exception:
+        return mbid, None
 
 
 # Creates a List of the Album Options based on the users search query.
@@ -91,10 +110,10 @@ def createList(album_list):
     for release in releases_data:
         mbid = release['MBID']
         # get the cover image
-        cover_image = cover_results.get(mbid)
+        cover_image = cover_results.get(mbid) or fallback_cover_data_uri()
 
         # if the cover image exists
-        if cover_image is not None:
+        if cover_image:
             release['Cover Image'] = cover_image
             parsed_releases[count] = release
             count += 1
@@ -125,9 +144,15 @@ def barcode_data_uri(code: str) -> str:
 # extracts the 5 most prominent colours from the album cover
 def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
 
+    if not data_uri or "," not in data_uri:
+        return DEFAULT_COLOURS[:k_out]
+
     #  load from data URI 
-    b64 = data_uri.split(",", 1)[1]
-    img = Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+    try:
+        b64 = data_uri.split(",", 1)[1]
+        img = Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
+    except Exception:
+        return DEFAULT_COLOURS[:k_out]
     if max(img.size) > max_side:
         img.thumbnail((max_side, max_side), Image.LANCZOS)
 
@@ -279,9 +304,15 @@ def index():
             ])
             # dynamically load the album cover
             selected_cover_image = get_album_cover(selected_mbid)
-            json_tracklist = get_tracklist(selected_mbid).json()
-            # pprint(json_tracklist)
-            tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
+            if not selected_cover_image:
+                selected_cover_image = fallback_cover_data_uri()
+            track_response = get_tracklist(selected_mbid)
+            if track_response is not None:
+                json_tracklist = track_response.json()
+                tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
+            else:
+                json_tracklist = None
+                tracklist, release_length = {}, 0
             # return the index.html template but with the selected album on the right of the screen
             return render_template('index.html',
                                    selected_cover_image=selected_cover_image,
@@ -296,11 +327,20 @@ def index():
             # set variables
             selected_details = request.form['selected_details']
             details = ast.literal_eval(selected_details)
-            json_tracklist = get_tracklist(details[5]).json()
+            track_response = get_tracklist(details[5])
             cover_image = get_album_cover(details[5])
             # pprint(json_tracklist)
-            tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
-            colours = colourExtractor(cover_image)
+            if track_response is not None:
+                json_tracklist = track_response.json()
+                tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
+            else:
+                json_tracklist = None
+                tracklist, release_length = {}, 0
+            if cover_image and cover_image.startswith('data:'):
+                colours = colourExtractor(cover_image)
+            else:
+                colours = DEFAULT_COLOURS
+                cover_image = fallback_cover_data_uri()
             # return the template with the completed variables
             return render_template('desktop-white.html', artist=details[0], album=details[1],
                                    date=details[2], country=details[3], track_count=details[4], format=details[6],
