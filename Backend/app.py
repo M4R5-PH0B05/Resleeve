@@ -112,7 +112,7 @@ def createList(album_list):
 
 
 # change the barcode string into an actual barcode
-def barcode_data_uri(code: str) -> str:
+def barcode_data_uri(code: str,type) -> str:
     # format it correctly ( adds a leading 0 )
     fmt = UPCA if len(code) == 12 else EAN13
     writer = ImageWriter()
@@ -123,10 +123,12 @@ def barcode_data_uri(code: str) -> str:
         "module_width": 0.26,  # tweak thickness if needed
         "module_height": 7.0,  # tall; we'll fit it with CSS
         "dpi": 300,
-        #"background": (255, 250, 236) - Light Mode
-        "background": (0, 1, 10),
-        "foreground": (255, 255, 255),
     }
+    if type == "white":
+        opts["background"] = (255,250,236)
+    else:
+        opts["background"] = (0,1,10)
+        opts["foreground"] = (255, 255, 255)
     # encodes the image to a base64 string
     buf = io.BytesIO()
     fmt(code, writer=writer).write(buf, opts)
@@ -317,6 +319,8 @@ def index():
         if 'selected_details' in request.form:
             # set variables
             selected_details = request.form['selected_details']
+            template_type = request.form['templateSelector']
+
             details = ast.literal_eval(selected_details)
             track_response = get_tracklist(details[5])
             cover_image = get_album_cover(details[5])
@@ -333,10 +337,11 @@ def index():
                 colours = DEFAULT_COLOURS
 
             # return the template with the completed variables
-            return render_template('desktop-dark.html', artist=details[0], album=details[1],
+            print(cover_image)
+            return render_template(f'desktop-{template_type}.html', artist=details[0], album=details[1],
                                    date=details[2], country=details[3], track_count=details[4], format=details[6],
                                    type=details[7],
-                                   barcode_src=barcode_data_uri(details[8]), cover_image=cover_image,
+                                   barcode_src=barcode_data_uri(details[8],template_type), cover_image=cover_image,
                                    run_time=ms_to_min_sec(release_length), tracklist=tracklist, colours=colours)
 
 

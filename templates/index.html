@@ -66,6 +66,10 @@
         {% endif %}
         <form method="post">
             <input type="hidden" name="selected_details" value="{{selected_details}}">
+            <input type="radio" id="white" name="templateSelector" value="white">
+            <label for="white">White</label>
+            <input type="radio" id="black" name="templateSelector" value="dark">
+            <label for="black">Dark</label>
             <input type="submit" id="submit2" value="Submit">
         </form>
     </div>
