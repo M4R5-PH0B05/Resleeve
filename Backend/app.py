@@ -11,6 +11,8 @@ import numpy as np
 import ast
 from matplotlib.colors import rgb_to_hsv
 from collections import Counter
+from functools import wraps
+import time
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
@@ -24,6 +26,19 @@ TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAA
 MAX_COVER_WORKERS = 4
 
 
+
+def timeProgram(func):
+    @wraps(func)
+    def timeProgramWrapper(*args,**kwargs):
+        startTime = time.perf_counter()
+        result = func(*args,**kwargs)
+        endTime = time.perf_counter()
+        totalTime = endTime-startTime
+        print(f'Function {func.__name__}{args} {kwargs} Took {totalTime:.4f} seconds.')
+        return result
+    return timeProgramWrapper
+
+@timeProgram
 def fetch_single_cover(mbid):
     # Fetches a single album cover as opposed to multiple like the usual function
     try:
@@ -33,6 +48,7 @@ def fetch_single_cover(mbid):
 
 
 # Creates a List of the Album Options based on the users search query.
+@timeProgram
 def createList(album_list):
     # First pass: collect all release data without cover art
     releases_data = []
@@ -112,6 +128,7 @@ def createList(album_list):
 
 
 # change the barcode string into an actual barcode
+@timeProgram
 def barcode_data_uri(code: str,type) -> str:
     # format it correctly ( adds a leading 0 )
     fmt = UPCA if len(code) == 12 else EAN13
@@ -136,6 +153,7 @@ def barcode_data_uri(code: str,type) -> str:
     return f"data:image/png;base64,{b64}"
 
 # extracts the 5 most prominent colours from the album cover
+@timeProgram
 def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
 
     if not data_uri or "," not in data_uri:
@@ -220,11 +238,13 @@ def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
     return [_hex(c) for c in final]
 
 # converts an rgb value to a hex value
+@timeProgram
 def _hex(rgb):
     r, g, b = map(int, rgb)
     return f"#{r:02x}{g:02x}{b:02x}"
 
 # converts ms to formatted minutes and seconds
+@timeProgram
 def ms_to_min_sec(ms):
     total_seconds = ms // 1000
     minutes = total_seconds // 60
@@ -232,6 +252,7 @@ def ms_to_min_sec(ms):
     return f"{minutes}:{seconds:02d}"
 
 # creates the formatted tracklist
+@timeProgram
 def createTracklist(json_tracklist):
     tracklist = {}
     release_length = 0
@@ -337,7 +358,7 @@ def index():
                 colours = DEFAULT_COLOURS
 
             # return the template with the completed variables
-            print(cover_image)
+            # print(cover_image)
             return render_template(f'desktop-{template_type}.html', artist=details[0], album=details[1],
                                    date=details[2], country=details[3], track_count=details[4], format=details[6],
                                    type=details[7],

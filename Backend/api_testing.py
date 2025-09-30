@@ -32,7 +32,7 @@ https://musicbrainz.org/ws/2/release?query=release:"OK Computer"&fmt=json
 # Search for album releases by artist and album name
 def search_albums(artist, album):
     url = 'https://musicbrainz.org/ws/2/release'
-    headers = {'User-Agent': 'Resleeve/1.0'}
+    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )'}
 
     return requests.get(url, headers=headers, params={
         "query": f"release:'{album}' AND artist:'{artist}'",
@@ -42,7 +42,7 @@ def search_albums(artist, album):
 # Get detailed tracklist and album info using MBID
 def get_tracklist(mbid):
     url = f'https://musicbrainz.org/ws/2/release/{mbid}'
-    headers = {'User-Agent': 'Resleeve/1.0'}
+    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )' }
 
     for attempt in range(3):
         try:
@@ -68,7 +68,7 @@ def get_tracklist(mbid):
 # Get album cover art as base64 encoded string
 def get_album_cover(mbid):
     cover_url = f"https://coverartarchive.org/release/{mbid}/front"
-    headers = {'User-Agent': 'Resleeve/1.0'}
+    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )' }
 
     for attempt in range(3):
         try:
