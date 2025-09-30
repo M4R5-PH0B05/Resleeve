@@ -123,7 +123,9 @@ def barcode_data_uri(code: str) -> str:
         "module_width": 0.26,  # tweak thickness if needed
         "module_height": 7.0,  # tall; we'll fit it with CSS
         "dpi": 300,
-        "background": (255, 250, 236)
+        #"background": (255, 250, 236) - Light Mode
+        "background": (0, 1, 10),
+        "foreground": (255, 255, 255),
     }
     # encodes the image to a base64 string
     buf = io.BytesIO()
@@ -331,7 +333,7 @@ def index():
                 colours = DEFAULT_COLOURS
 
             # return the template with the completed variables
-            return render_template('desktop-white.html', artist=details[0], album=details[1],
+            return render_template('desktop-dark.html', artist=details[0], album=details[1],
                                    date=details[2], country=details[3], track_count=details[4], format=details[6],
                                    type=details[7],
                                    barcode_src=barcode_data_uri(details[8]), cover_image=cover_image,
