@@ -68,23 +68,17 @@ def get_tracklist(mbid):
 # Get album cover art as base64 encoded string
 def get_album_cover(mbid):
     cover_url = f"https://coverartarchive.org/release/{mbid}/front"
-    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )' }
+    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )'}
 
-    for attempt in range(3):
-        try:
-            response = requests.get(cover_url, headers=headers, timeout=10)
-        except RequestException:
-            if attempt == 2:
-                return None
-        else:
-            if response.status_code == 200:
-                b64_image = base64.b64encode(response.content).decode('utf-8')
-                content_type = response.headers.get('content-type', 'image/jpeg')
-                return f"data:{content_type};base64,{b64_image}"
-            if 400 <= response.status_code < 500:
-                return None
-        time.sleep(0.5 * (attempt + 1))
+    try:
+        response = requests.get(cover_url, headers=headers, timeout=3)  # ← 3s instead of 10s
+        if response.status_code == 200:
+            b64_image = base64.b64encode(response.content).decode('utf-8')
+            content_type = response.headers.get('content-type', 'image/jpeg')
+            return f"data:{content_type};base64,{b64_image}"
+    except RequestException:
+        pass
+
     return None
-
 
 # print(search_albums("Bring me the horizon","Post Human: Survival Horror").json())
