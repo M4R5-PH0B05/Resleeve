@@ -1,12 +1,11 @@
-import flask
 from flask import Flask, render_template, request
 from api_testing import search_albums, get_tracklist, get_album_cover
-from pprintpp import pprint
-import io, base64
-import os
+
+# from pprintpp import pprint
+import io
+import base64
 from barcode import UPCA, EAN13
 from barcode.writer import ImageWriter
-from sklearn.cluster import KMeans
 import numpy as np
 import ast
 from matplotlib.colors import rgb_to_hsv
@@ -16,27 +15,27 @@ import time
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
-from functools import lru_cache
 
-app = Flask(__name__, template_folder='../templates', static_folder='../static')
-app.secret_key = 'Testing123!'
+app = Flask(__name__, template_folder="../templates", static_folder="../static")
+app.secret_key = "Testing123!"
 
 DEFAULT_COLOURS = ["#ffffff", "#d4d4d4", "#a0a0a0", "#6c6c6c", "#2c2c2c"]
 TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9SClSxIAAAAASUVORK5CYII="
 MAX_COVER_WORKERS = 10
 
 
-
 def timeProgram(func):
     @wraps(func)
-    def timeProgramWrapper(*args,**kwargs):
+    def timeProgramWrapper(*args, **kwargs):
         startTime = time.perf_counter()
-        result = func(*args,**kwargs)
+        result = func(*args, **kwargs)
         endTime = time.perf_counter()
-        totalTime = endTime-startTime
-        print(f'Function {func.__name__}{args} {kwargs} Took {totalTime:.4f} seconds.')
+        totalTime = endTime - startTime
+        print(f"Function {func.__name__}{args} {kwargs} Took {totalTime:.4f} seconds.")
         return result
+
     return timeProgramWrapper
+
 
 @timeProgram
 def fetch_single_cover(mbid):
@@ -53,55 +52,60 @@ def createList(album_list):
     # First pass: collect all release data without cover art
     releases_data = []
 
-    for i, release in enumerate(album_list['releases']):
+    for i, release in enumerate(album_list["releases"]):
         # Set the variables based on the information in the JSON
-        artist = release['artist-credit'][0]['name']
+        artist = release["artist-credit"][0]["name"]
         # Country can be found in two places
-        country = release.get('country')
+        country = release.get("country")
         # If not found above, then look for it in the other place
-        if not country and 'release-events' in release:
-            for event in release['release-events']:
+        if not country and "release-events" in release:
+            for event in release["release-events"]:
                 # Check release events
-                if 'area' in event and 'iso-3166-1-codes' in event['area']:
-                    country = event['area']['iso-3166-1-codes'][0]
+                if "area" in event and "iso-3166-1-codes" in event["area"]:
+                    country = event["area"]["iso-3166-1-codes"][0]
                     break
         # Get other variables
-        mbid = release['id']
-        track_count = release['track-count']
-        title = release['title']
+        mbid = release["id"]
+        track_count = release["track-count"]
+        title = release["title"]
         # Some entries don't have these variables - make sure they do not raise a ValueError if they do not exist
         try:
-            barcode = release['barcode']
-        except:
+            barcode = release["barcode"]
+        except Exception:
             barcode = "794558113229"
         try:
-            format = release['media'][0]['format']
-        except:
+            format = release["media"][0]["format"]
+        except Exception:
             format = None
-        release_type = release['release-group']['primary-type']
+        release_type = release["release-group"]["primary-type"]
         # The date variable can be found in two different places - so check both
-        date = release.get('date')
-        if date == None:
-            date = release.get('release-events', [{}])[0].get('date')
+        date = release.get("date")
+        if date is None:
+            date = release.get("release-events", [{}])[0].get("date")
 
         # Create the dictionary of all of the album data
-        releases_data.append({
-            'Artist': artist,
-            'Title': title,
-            'Country': country,
-            'Track Count': track_count,
-            'MBID': mbid,
-            'Format': format,
-            'Release Type': release_type,
-            'Date': date,
-            'Barcode': barcode
-        })
+        releases_data.append(
+            {
+                "Artist": artist,
+                "Title": title,
+                "Country": country,
+                "Track Count": track_count,
+                "MBID": mbid,
+                "Format": format,
+                "Release Type": release_type,
+                "Date": date,
+                "Barcode": barcode,
+            }
+        )
 
     # Second pass: fetch all covers concurrently
     cover_results = {}
     with ThreadPoolExecutor(max_workers=MAX_COVER_WORKERS) as executor:
         # Submit all cover art requests
-        future_to_mbid = {executor.submit(fetch_single_cover, release['MBID']): release for release in releases_data}
+        future_to_mbid = {
+            executor.submit(fetch_single_cover, release["MBID"]): release
+            for release in releases_data
+        }
 
         # Collect results as they complete
         for future in concurrent.futures.as_completed(future_to_mbid):
@@ -114,13 +118,13 @@ def createList(album_list):
 
     # for all of the releases
     for release in releases_data:
-        mbid = release['MBID']
+        mbid = release["MBID"]
         # get the cover image
         cover_image = cover_results.get(mbid)
 
         # if the cover image exists
         if cover_image:
-            release['Cover Image'] = cover_image
+            release["Cover Image"] = cover_image
             parsed_releases[count] = release
             count += 1
 
@@ -129,7 +133,7 @@ def createList(album_list):
 
 # change the barcode string into an actual barcode
 @timeProgram
-def barcode_data_uri(code: str,type) -> str:
+def barcode_data_uri(code: str, type) -> str:
     # format it correctly ( adds a leading 0 )
     fmt = UPCA if len(code) == 12 else EAN13
     writer = ImageWriter()
@@ -142,9 +146,9 @@ def barcode_data_uri(code: str,type) -> str:
         "dpi": 300,
     }
     if type == "white":
-        opts["background"] = (255,250,236)
+        opts["background"] = (255, 250, 236)
     else:
-        opts["background"] = (0,1,10)
+        opts["background"] = (0, 1, 10)
         opts["foreground"] = (255, 255, 255)
     # encodes the image to a base64 string
     buf = io.BytesIO()
@@ -152,37 +156,41 @@ def barcode_data_uri(code: str,type) -> str:
     b64 = base64.b64encode(buf.getvalue()).decode("ascii")
     return f"data:image/png;base64,{b64}"
 
+
 # extracts the 5 most prominent colours from the album cover
 @timeProgram
 def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
-
     if not data_uri or "," not in data_uri:
         return DEFAULT_COLOURS[:k_out]
 
-    #  load from data URI 
     try:
         b64 = data_uri.split(",", 1)[1]
         img = Image.open(io.BytesIO(base64.b64decode(b64))).convert("RGB")
     except Exception:
         return DEFAULT_COLOURS[:k_out]
-    if max(img.size) > max_side:
-        img.thumbnail((max_side, max_side), Image.LANCZOS)
 
-    #  quantize to reduce unique colours (stable & fast) 
-    q = img.quantize(colors=k_quant, method=Image.MEDIANCUT)
-    palette = q.getpalette()[:k_quant * 3]
-    palette = [tuple(palette[i:i + 3]) for i in range(0, len(palette), 3)]
+    if max(img.size) > max_side:
+        img.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+
+    # quantize to reduce unique colours (stable & fast)
+    q = img.quantize(colors=k_quant, method=Image.Quantize.MEDIANCUT)
+
+    pal = q.getpalette()
+    if pal is None:
+        # shouldn't happen after quantize, but keep it safe for Pyright & runtime
+        return DEFAULT_COLOURS[:k_out]
+
+    pal = pal[: k_quant * 3]  # take first k_quant colours (RGB triplets)
+    palette = [tuple(pal[i : i + 3]) for i in range(0, len(pal), 3)]
 
     idxs = np.array(q.getdata(), dtype=np.int32)
     counts = Counter(idxs.tolist())
 
-    # build (count, rgb) list (drop invalid indices)
+    # (count, rgb) list, dropping invalid indices
     colors = [(n, palette[i]) for i, n in counts.items() if 0 <= i < len(palette)]
-
     if not colors:
         return ["#000000"] * k_out
 
-    #  compute saturation + luminance for each palette colour 
     def luminance(rgb):
         r, g, b = [c / 255.0 for c in rgb]
         return 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -192,21 +200,19 @@ def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
     lums = np.array([luminance(c) for _, c in colors], dtype=np.float32)
     freqs = np.array([n for n, _ in colors], dtype=np.float32)
 
-    #  prominence score: frequency * (saturation boosted) 
-    # tweak exponents to taste; this strongly lifts vivid colours
+    # prominence score: frequency * (saturation boosted)
     score = freqs * (0.25 + sats) ** 2.0
 
-    # de-dup: skip very similar colours (Euclidean in RGB)
     def too_close(c, picked, thr=20):
         cr = np.array(c, dtype=np.int16)
-        return any(np.linalg.norm(cr - np.array(p, dtype=np.int16)) < thr for p in picked)
+        return any(
+            np.linalg.norm(cr - np.array(p, dtype=np.int16)) < thr for p in picked
+        )
 
-    # always include darkest & lightest to anchor the palette
     rgb_list = [c for _, c in colors]
     darkest = rgb_list[int(np.argmin(lums))]
     lightest = rgb_list[int(np.argmax(lums))]
 
-    # pick top by prominence (excluding extremes) with de-dup
     order = np.argsort(-score)
     picked = []
     for idx in order:
@@ -219,7 +225,6 @@ def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
         if len(picked) >= max(0, k_out - 2):
             break
 
-    # if not enough, backfill by frequency
     if len(picked) < max(0, k_out - 2):
         by_freq = np.argsort(-freqs)
         for idx in by_freq:
@@ -230,18 +235,17 @@ def colourExtractor(data_uri, k_out=5, k_quant=48, max_side=300):
             if len(picked) >= max(0, k_out - 2):
                 break
 
-    # final ordering: lightest, mids (by luminance), darkest
-    mids = sorted(picked[:k_out - 2], key=lambda c: luminance(c))
+    mids = sorted(picked[: max(0, k_out - 2)], key=lambda c: luminance(c))
     final = [lightest, *mids, darkest]
-
-    # to CSS hex
     return [_hex(c) for c in final]
+
 
 # converts an rgb value to a hex value
 @timeProgram
 def _hex(rgb):
     r, g, b = map(int, rgb)
     return f"#{r:02x}{g:02x}{b:02x}"
+
 
 # converts ms to formatted minutes and seconds
 @timeProgram
@@ -250,6 +254,7 @@ def ms_to_min_sec(ms):
     minutes = total_seconds // 60
     seconds = total_seconds % 60
     return f"{minutes}:{seconds:02d}"
+
 
 # creates the formatted tracklist
 @timeProgram
@@ -260,12 +265,12 @@ def createTracklist(json_tracklist):
 
     # first pass — collect seconds & find the max
     for item in json_tracklist:
-        pos = int(item['position'])  # numeric sort later
-        rec_len = item['recording'].get('length')  # ms or None
+        pos = int(item["position"])  # numeric sort later
+        rec_len = item["recording"].get("length")  # ms or None
 
         # setting the length of the recording
         if rec_len is None:
-            length_str = 'N/A'
+            length_str = "N/A"
             seconds = None
         else:
             seconds = rec_len // 1000
@@ -275,72 +280,79 @@ def createTracklist(json_tracklist):
                 max_sec = seconds
 
         tracklist[pos] = {
-            'title': item['title'],
-            'length': length_str,
-            'seconds': seconds,
+            "title": item["title"],
+            "length": length_str,
+            "seconds": seconds,
         }
 
     # second pass — percent relative to the longest track
     for v in tracklist.values():
-        v['pct'] = 0 if v['seconds'] is None else (v['seconds'] / max_sec * 100)
+        v["pct"] = 0 if v["seconds"] is None else (v["seconds"] / max_sec * 100)
 
     return tracklist, release_length
 
 
 # Index Route
-@app.route('/', methods=['GET', 'POST'])
+@app.route("/", methods=["GET", "POST"])
 def index():
     # Form Submission
-    if request.method == 'POST':
+    if request.method == "POST":
         # If the FORM is the Initial Selection
-        if 'selected_MBID' in request.form:
+        if "selected_MBID" in request.form:
             # Set variables that will be passed through
             selected_album_information = []
-            selected_artist = request.form['selected_artist']
-            selected_album = request.form['selected_album']
-            selected_date = request.form['selected_date']
-            selected_country = request.form['selected_country']
-            selected_track_count = request.form['selected_track_count']
-            selected_mbid = request.form['selected_MBID']
-            selected_format = request.form['selected_format']
-            selected_type = request.form['selected_type']
-            selected_barcode = request.form['selected_barcode']
+            selected_artist = request.form["selected_artist"]
+            selected_album = request.form["selected_album"]
+            selected_date = request.form["selected_date"]
+            selected_country = request.form["selected_country"]
+            selected_track_count = request.form["selected_track_count"]
+            selected_mbid = request.form["selected_MBID"]
+            selected_format = request.form["selected_format"]
+            selected_type = request.form["selected_type"]
+            selected_barcode = request.form["selected_barcode"]
             # Adds the variables to the list of album information
-            selected_album_information.extend([
-                selected_artist,
-                selected_album,
-                selected_date,
-                selected_country,
-                selected_track_count,
-                selected_mbid,
-                selected_format,
-                selected_type,
-                selected_barcode
-            ])
+            selected_album_information.extend(
+                [
+                    selected_artist,
+                    selected_album,
+                    selected_date,
+                    selected_country,
+                    selected_track_count,
+                    selected_mbid,
+                    selected_format,
+                    selected_type,
+                    selected_barcode,
+                ]
+            )
             # dynamically load the album cover
             selected_cover_image = get_album_cover(selected_mbid)
 
             track_response = get_tracklist(selected_mbid)
             if track_response is not None:
                 json_tracklist = track_response.json()
-                tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
+                tracklist, release_length = createTracklist(
+                    json_tracklist["media"][0]["tracks"]
+                )
             else:
                 json_tracklist = None
                 tracklist, release_length = {}, 0
             # return the index.html template but with the selected album on the right of the screen
-            return render_template('index.html',
-                                   selected_cover_image=selected_cover_image,
-                                   selected_artist=selected_artist,
-                                   selected_album=selected_album,
-                                   selected_country=selected_country,
-                                   selected_track_count=selected_track_count,
-                                   selected_mbid=selected_mbid, tracklist=tracklist,
-                                   selected_details=selected_album_information)
+            return render_template(
+                "index.html",
+                selected_cover_image=selected_cover_image,
+                selected_artist=selected_artist,
+                selected_album=selected_album,
+                selected_country=selected_country,
+                selected_track_count=selected_track_count,
+                selected_mbid=selected_mbid,
+                tracklist=tracklist,
+                selected_details=selected_album_information,
+            )
         # if the album has been fully selected
-        if 'selected_details' in request.form:
+        if "selected_details" in request.form:
             # set variables
-            selected_details = request.form['selected_details']
-            template_type = request.form['templateSelector']
+            selected_details = request.form["selected_details"]
+            template_type = request.form["templateSelector"]
 
             details = ast.literal_eval(selected_details)
             track_response = get_tracklist(details[5])
@@ -348,36 +360,48 @@ def index():
             # pprint(json_tracklist)
             if track_response is not None:
                 json_tracklist = track_response.json()
-                tracklist, release_length = createTracklist(json_tracklist['media'][0]['tracks'])
+                tracklist, release_length = createTracklist(
+                    json_tracklist["media"][0]["tracks"]
+                )
             else:
                 json_tracklist = None
                 tracklist, release_length = {}, 0
-            if cover_image and cover_image.startswith('data:'):
+            if cover_image and cover_image.startswith("data:"):
                 colours = colourExtractor(cover_image)
             else:
                 colours = DEFAULT_COLOURS
 
             # return the template with the completed variables
             # print(cover_image)
-            return render_template(f'desktop-{template_type}.html', artist=details[0], album=details[1],
-                                   date=details[2], country=details[3], track_count=details[4], format=details[6],
-                                   type=details[7],
-                                   barcode_src=barcode_data_uri(details[8],template_type), cover_image=cover_image,
-                                   run_time=ms_to_min_sec(release_length), tracklist=tracklist, colours=colours)
-
+            return render_template(
+                f"desktop-{template_type}.html",
+                artist=details[0],
+                album=details[1],
+                date=details[2],
+                country=details[3],
+                track_count=details[4],
+                format=details[6],
+                type=details[7],
+                barcode_src=barcode_data_uri(details[8], template_type),
+                cover_image=cover_image,
+                run_time=ms_to_min_sec(release_length),
+                tracklist=tracklist,
+                colours=colours,
+            )
 
         else:
             # Get details from form
-            artist = request.form['artist']
-            album = request.form['album']
+            artist = request.form["artist"]
+            album = request.form["album"]
             # Create new API instance
             album_list = search_albums(artist, album).json()
             # Create dictionary of results through parsing JSON data
             # pprint(album_list)
             parsed_albums = createList(album_list)
-            return render_template('index.html', releases=parsed_albums)
+            return render_template("index.html", releases=parsed_albums)
     # if no routes are matched, return default template
-    return render_template('index.html')
+    return render_template("index.html")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     app.run(debug=True)
