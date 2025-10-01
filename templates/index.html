@@ -34,11 +34,10 @@
                         <input type="hidden" name="selected_album" value="{{release['Title']}}">
                         <input type="hidden" name="selected_date" value="{{release['Date']}}">
                         <input type="hidden" name="selected_country" value="{{release['Country']}}">
-                        <input type="hidden" name="selected_track_count" value="{{release['Track Count']}}">
-                        <input type="hidden" name="selected_MBID" value="{{release['MBID']}}">
+                        <input type="hidden" name="selected_track_count" value="{{release['Track Count']}}"><input type="hidden" name="selected_MBID" value="{{release['MBID']}}">
                         <input type="hidden" name="selected_format" value="{{release['Format']}}">
                         <input type="hidden" name="selected_type" value="{{release['Release Type']}}">
-                        <input type="hidden" name="selected_barcode" value="{{release['Barcode']}}">
+                        <int type="hidden" name="selected_barcode" value="{{release['Barcode']}}">
                         <input type="submit" id="submit-1" value="Select This Release"><br>
                     </form>
 
@@ -74,7 +73,8 @@
             <h4>Background Colour</h4>
             <input type="radio" id="default" name="backgroundSelector" value="default" checked="checked">
             <label for="default">Default</label>
-            <input type="radio" name="backgroundSelector" value="">Custom<input type="text" name="custom" />
+            <input type="radio" name="backgroundSelector" value="gradient">Gradient Start:<input type="text" name="gradient_start"> End:<input type="text" name="gradient_end">
+            <input type="radio" name="backgroundSelector" value="custom">Custom<input type="text" name="custom" />
             <br><br>
             <input type="submit" id="submit2" value="Submit">
         </form>

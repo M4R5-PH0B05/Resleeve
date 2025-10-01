@@ -163,8 +163,10 @@ def barcode_data_uri(code: str, type,background) -> str:
     }
     if type == "white":
         if background != None:
+
             opts["background"] = background
         else:
+            opts["background"] = "transparent"
             opts["background"] = (255, 250, 236)
     else:
         opts["foreground"] = (255, 255, 255)
@@ -332,7 +334,7 @@ def index():
             selected_mbid = request.form["selected_MBID"]
             selected_format = request.form["selected_format"]
             selected_type = request.form["selected_type"]
-            selected_barcode = request.form["selected_barcode"]
+            selected_barcode = request.form.get("selected_barcode") or "794558113229"
             # Adds the variables to the list of album information
             selected_album_information.extend(
                 [
@@ -380,12 +382,29 @@ def index():
             details = ast.literal_eval(selected_details)
             track_response = get_tracklist(details[5])
             cover_image = get_album_cover(details[5])
-            background = request.form["backgroundSelector"]
-            print("======")
+            background_choice = request.form.get("backgroundSelector", "default")
+            custom_background = request.form.get("custom", "").strip()
+            gradient_start = request.form.get("gradient_start", "").strip()
+            gradient_end = request.form.get("gradient_end", "").strip()
 
-            if background == "":
-                background = request.form.get("custom")
-            print(background)
+            if background_choice == "gradient":
+                if gradient_start and gradient_end:
+                    background = f"linear-gradient(45deg, {gradient_start}, {gradient_end})"
+                    barcode_background_source = gradient_start
+                else:
+                    background = "default"
+                    barcode_background_source = "default"
+            elif background_choice == "custom":
+                background = custom_background or "default"
+                barcode_background_source = background
+            else:
+                background = background_choice or "default"
+                barcode_background_source = background
+
+            try:
+                barcode_background = hex_to_rgb(barcode_background_source)
+            except ValueError:
+                barcode_background = None
             # pprint(json_tracklist)
             if track_response is not None:
                 json_tracklist = track_response.json()
@@ -400,7 +419,7 @@ def index():
             else:
                 colours = DEFAULT_COLOURS
 
-            # return the template with the comp leted variables
+            # return the template with the completed variables
             # print(cover_image)
             return render_template(
                 f"desktop-{template_type}.html",
@@ -411,7 +430,7 @@ def index():
                 track_count=details[4],
                 format=details[6],
                 type=details[7],
-                barcode_src=barcode_data_uri(details[8], template_type,hex_to_rgb(background)),
+                barcode_src=barcode_data_uri(details[8], template_type, barcode_background),
                 cover_image=cover_image,
                 run_time=ms_to_min_sec(release_length),
                 tracklist=tracklist,

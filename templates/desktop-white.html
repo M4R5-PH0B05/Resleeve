@@ -14,7 +14,8 @@
         body {
             font-family: Helvetica, Arial, sans-serif;
             {% if background == "default"%}
-                background: #FFFAEC;
+                {#background: #FFFAEC;#}
+                background: linear-gradient(45deg, #FFFAEC, #FF11AA);
             {%  else %}
                 background: {{ background }};
             {% endif %}
@@ -30,7 +31,8 @@
             width: 2060px;
             height: 1440px;
             {% if background == "default"%}
-                background: #FFFAEC;
+                {#background: #FFFAEC;#}
+                background-color: rgb(0 0 0 / 0);
             {%  else %}
                 background: {{ background }};
             {% endif %}
