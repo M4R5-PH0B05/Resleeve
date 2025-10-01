@@ -13,7 +13,11 @@
 
         body {
             font-family: Helvetica, Arial, sans-serif;
-            background: #FFFAEC;
+            {% if background == "default"%}
+                background: #FFFAEC;
+            {%  else %}
+                background: {{ background }};
+            {% endif %}
             margin: 0;
             {#background: red;#}
             padding: 0;
@@ -25,7 +29,11 @@
         .container {
             width: 2060px;
             height: 1440px;
-            background: #FFFAEC;
+            {% if background == "default"%}
+                background: #FFFAEC;
+            {%  else %}
+                background: {{ background }};
+            {% endif %}
             {#background: red;#}
             position: absolute;
             top: calc(50% - 210px);

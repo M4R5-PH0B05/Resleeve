@@ -45,7 +45,23 @@ def fetch_single_cover(mbid):
     except Exception:
         return mbid, None
 
+@timeProgram
+def hex_to_rgb(hex_color: str):
+    if hex_color != "default":
+        hex_color = hex_color.lstrip("#")  # remove '#' if present
 
+        if len(hex_color) == 3:  # short form e.g. #FAB
+            hex_color = "".join([c * 2 for c in hex_color])
+
+        if len(hex_color) != 6:
+            raise ValueError("Invalid HEX color format.")
+
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+
+        return (r, g, b)
+    return None
 # Creates a List of the Album Options based on the users search query.
 @timeProgram
 def createList(album_list):
@@ -133,7 +149,7 @@ def createList(album_list):
 
 # change the barcode string into an actual barcode
 @timeProgram
-def barcode_data_uri(code: str, type) -> str:
+def barcode_data_uri(code: str, type,background) -> str:
     # format it correctly ( adds a leading 0 )
     fmt = UPCA if len(code) == 12 else EAN13
     writer = ImageWriter()
@@ -146,10 +162,17 @@ def barcode_data_uri(code: str, type) -> str:
         "dpi": 300,
     }
     if type == "white":
-        opts["background"] = (255, 250, 236)
+        if background != None:
+            opts["background"] = background
+        else:
+            opts["background"] = (255, 250, 236)
     else:
-        opts["background"] = (0, 1, 10)
         opts["foreground"] = (255, 255, 255)
+        if background != None:
+            opts["background"] = background
+        else:
+            opts["background"] = (0, 1, 10)
+
     # encodes the image to a base64 string
     buf = io.BytesIO()
     fmt(code, writer=writer).write(buf, opts)
@@ -360,7 +383,7 @@ def index():
             background = request.form["backgroundSelector"]
             print("======")
 
-            if background is "":
+            if background == "":
                 background = request.form.get("custom")
             print(background)
             # pprint(json_tracklist)
@@ -377,7 +400,7 @@ def index():
             else:
                 colours = DEFAULT_COLOURS
 
-            # return the template with the completed variables
+            # return the template with the comp leted variables
             # print(cover_image)
             return render_template(
                 f"desktop-{template_type}.html",
@@ -388,7 +411,7 @@ def index():
                 track_count=details[4],
                 format=details[6],
                 type=details[7],
-                barcode_src=barcode_data_uri(details[8], template_type),
+                barcode_src=barcode_data_uri(details[8], template_type,hex_to_rgb(background)),
                 cover_image=cover_image,
                 run_time=ms_to_min_sec(release_length),
                 tracklist=tracklist,
@@ -411,4 +434,4 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True,port=5001)
