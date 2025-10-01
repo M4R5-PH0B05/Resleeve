@@ -384,27 +384,10 @@ def index():
             cover_image = get_album_cover(details[5])
             background_choice = request.form.get("backgroundSelector", "default")
             custom_background = request.form.get("custom", "").strip()
-            gradient_start = request.form.get("gradient_start", "").strip()
-            gradient_end = request.form.get("gradient_end", "").strip()
-
-            if background_choice == "gradient":
-                if gradient_start and gradient_end:
-                    background = f"linear-gradient(45deg, {gradient_start}, {gradient_end})"
-                    barcode_background_source = gradient_start
-                else:
-                    background = "default"
-                    barcode_background_source = "default"
-            elif background_choice == "custom":
+            if background_choice == "custom":
                 background = custom_background or "default"
-                barcode_background_source = background
             else:
                 background = background_choice or "default"
-                barcode_background_source = background
-
-            try:
-                barcode_background = hex_to_rgb(barcode_background_source)
-            except ValueError:
-                barcode_background = None
             # pprint(json_tracklist)
             if track_response is not None:
                 json_tracklist = track_response.json()
@@ -430,7 +413,7 @@ def index():
                 track_count=details[4],
                 format=details[6],
                 type=details[7],
-                barcode_src=barcode_data_uri(details[8], template_type, barcode_background),
+                barcode_src=barcode_data_uri(details[8], template_type, hex_to_rgb(background)),
                 cover_image=cover_image,
                 run_time=ms_to_min_sec(release_length),
                 tracklist=tracklist,
