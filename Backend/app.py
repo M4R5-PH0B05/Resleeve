@@ -31,7 +31,7 @@ def timeProgram(func):
         result = func(*args, **kwargs)
         endTime = time.perf_counter()
         totalTime = endTime - startTime
-        print(f"Function {func.__name__}{args} {kwargs} Took {totalTime:.4f} seconds.")
+        print(f"Function {func.__name__} Took {totalTime:.4f} seconds.")
         return result
 
     return timeProgramWrapper
@@ -357,6 +357,12 @@ def index():
             details = ast.literal_eval(selected_details)
             track_response = get_tracklist(details[5])
             cover_image = get_album_cover(details[5])
+            background = request.form["backgroundSelector"]
+            print("======")
+
+            if background is "":
+                background = request.form.get("custom")
+            print(background)
             # pprint(json_tracklist)
             if track_response is not None:
                 json_tracklist = track_response.json()
@@ -387,6 +393,7 @@ def index():
                 run_time=ms_to_min_sec(release_length),
                 tracklist=tracklist,
                 colours=colours,
+                background=background
             )
 
         else:

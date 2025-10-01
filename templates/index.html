@@ -64,14 +64,18 @@
             {% endfor %}
         </ol>
         {% endif %}
+        <h4>Template Style</h4>
         <form method="post">
             <input type="hidden" name="selected_details" value="{{selected_details}}">
-            <input type="radio" id="white" name="templateSelector" value="white">
+            <input type="radio" id="white" name="templateSelector" value="white" checked="checked">
             <label for="white">White</label>
             <input type="radio" id="black" name="templateSelector" value="dark">
             <label for="black">Dark</label>
-            <input type="radio" id="gradient" name="templateSelector" value="gradient">
-            <label for="black">Gradient</label>
+            <h4>Background Colour</h4>
+            <input type="radio" id="default" name="backgroundSelector" value="default" checked="checked">
+            <label for="default">Default</label>
+            <input type="radio" name="backgroundSelector" value="">Custom<input type="text" name="custom" />
+            <br><br>
             <input type="submit" id="submit2" value="Submit">
         </form>
     </div>
