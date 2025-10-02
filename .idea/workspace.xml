@@ -7,6 +7,7 @@
     <list default="true" id="7ce414b5-f674-4e2b-8971-8d91beebd72e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Backend/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/desktop-dark.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/desktop-dark.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/desktop-white.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/desktop-white.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
     </list>
@@ -32,6 +33,8 @@
 }</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/Backend/app.py" root0="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/templates/desktop-white.html" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
+    <setting file="file://$PROJECT_DIR$/templates/index.html" root0="FORCE_HIGHLIGHTING" root1="SKIP_INSPECTION" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
@@ -139,6 +142,7 @@
       <workItem from="1758500918273" duration="3941000" />
       <workItem from="1759088034412" duration="18329000" />
       <workItem from="1759316507267" duration="7658000" />
+      <workItem from="1759414218480" duration="627000" />
     </task>
     <servers />
   </component>

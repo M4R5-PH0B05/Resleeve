@@ -20,6 +20,7 @@ app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.secret_key = "Testing123!"
 
 DEFAULT_COLOURS = ["#ffffff", "#d4d4d4", "#a0a0a0", "#6c6c6c", "#2c2c2c"]
+DEFAULT_BACKGROUND_GRADIENT = "linear-gradient(45deg, #FFFAEC, #FF11AA)"
 TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9SClSxIAAAAASUVORK5CYII="
 MAX_COVER_WORKERS = 10
 
@@ -149,7 +150,7 @@ def createList(album_list):
 
 # change the barcode string into an actual barcode
 @timeProgram
-def barcode_data_uri(code: str, type,background) -> str:
+def barcode_data_uri(code: str, type, background) -> str:
     # format it correctly ( adds a leading 0 )
     fmt = UPCA if len(code) == 12 else EAN13
     writer = ImageWriter()
@@ -162,18 +163,17 @@ def barcode_data_uri(code: str, type,background) -> str:
         "dpi": 300,
     }
     if type == "white":
-        if background != None:
-
-            opts["background"] = background
-        else:
-            opts["background"] = "transparent"
-            opts["background"] = (255, 250, 236)
+        default_background = (255, 250, 236)
     else:
+        default_background = (0, 1, 10)
         opts["foreground"] = (255, 255, 255)
-        if background != None:
-            opts["background"] = background
-        else:
-            opts["background"] = (0, 1, 10)
+
+    if background == "transparent":
+        opts["background"] = "transparent"
+    elif background is not None:
+        opts["background"] = background
+    else:
+        opts["background"] = default_background
 
     # encodes the image to a base64 string
     buf = io.BytesIO()
@@ -383,11 +383,60 @@ def index():
             track_response = get_tracklist(details[5])
             cover_image = get_album_cover(details[5])
             background_choice = request.form.get("backgroundSelector", "default")
-            custom_background = request.form.get("custom", "").strip()
-            if background_choice == "custom":
-                background = custom_background or "default"
+            custom_background_raw = request.form.get("custom", "").strip()
+            gradient_start_raw = request.form.get("gradient_start", "").strip()
+            gradient_end_raw = request.form.get("gradient_end", "").strip()
+
+            def sanitize_hex_color(value):
+                if not value:
+                    return None
+                value = value.strip()
+                if not value:
+                    return None
+                if not value.startswith("#"):
+                    value = f"#{value}"
+                hex_part = value[1:]
+                if len(hex_part) == 3:
+                    if not all(c in "0123456789abcdefABCDEF" for c in hex_part):
+                        return None
+                    hex_part = "".join(c * 2 for c in hex_part.lower())
+                elif len(hex_part) == 6:
+                    if not all(c in "0123456789abcdefABCDEF" for c in hex_part):
+                        return None
+                    hex_part = hex_part.lower()
+                else:
+                    return None
+                return f"#{hex_part}"
+
+            if template_type == "dark":
+                default_body_background = "#00010A"
+                default_container_background = "#00010A"
             else:
-                background = background_choice or "default"
+                default_body_background = DEFAULT_BACKGROUND_GRADIENT
+                default_container_background = "rgb(0 0 0 / 0)"
+
+            background = "default"
+            body_background = default_body_background
+            container_background = default_container_background
+            barcode_background = None
+
+            if background_choice == "gradient":
+                start_color = sanitize_hex_color(gradient_start_raw) or "#FFFAEC"
+                end_color = sanitize_hex_color(gradient_end_raw) or "#FF11AA"
+                body_background = f"linear-gradient(45deg, {start_color}, {end_color})"
+                container_background = "transparent"
+                background = "gradient"
+                barcode_background = "transparent"
+            elif background_choice == "custom":
+                custom_color = sanitize_hex_color(custom_background_raw)
+                if custom_color:
+                    body_background = custom_color
+                    container_background = custom_color
+                    background = custom_color
+                    barcode_background = hex_to_rgb(custom_color)
+                else:
+                    background = "default"
+                    barcode_background = None
             # pprint(json_tracklist)
             if track_response is not None:
                 json_tracklist = track_response.json()
@@ -413,12 +462,14 @@ def index():
                 track_count=details[4],
                 format=details[6],
                 type=details[7],
-                barcode_src=barcode_data_uri(details[8], template_type, hex_to_rgb(background)),
+                barcode_src=barcode_data_uri(details[8], template_type, barcode_background),
                 cover_image=cover_image,
                 run_time=ms_to_min_sec(release_length),
                 tracklist=tracklist,
                 colours=colours,
-                background=background
+                background=background,
+                body_background=body_background,
+                container_background=container_background,
             )
 
         else:
