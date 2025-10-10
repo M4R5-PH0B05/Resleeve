@@ -70,13 +70,58 @@
             <label for="white">White</label>
             <input type="radio" id="black" name="templateSelector" value="dark">
             <label for="black">Dark</label>
-            <h4>Background Colour</h4>
+        <h4>Background Colour</h4>
+        <div class="background-option">
             <input type="radio" id="default" name="backgroundSelector" value="default" checked="checked">
             <label for="default">Default</label>
-            <input type="radio" name="backgroundSelector" value="gradient">Gradient Start:<input type="text" name="gradient_start"> End:<input type="text" name="gradient_end">
-            <input type="radio" name="backgroundSelector" value="custom">Custom<input type="text" name="custom" />
-            <br><br>
-            <input type="submit" id="submit2" value="Submit">
+        </div>
+
+        <div class="background-option">
+            <input type="radio" id="gradient" name="backgroundSelector" value="gradient">
+            <label for="gradient">Gradient</label>
+            <div class="gradient-picker">
+                <div class="gradient-column">
+                    <p class="picker-title">Start colour</p>
+                    <div class="swatch-list">
+                        {% if gradient_colours %}
+                            {% for colour in gradient_colours %}
+                                <div class="swatch-option">
+                                    <button type="button" class="swatch-button" data-gradient-target="start" data-color="{{ colour }}" style="background-color: {{ colour }};"></button>
+                                    <span class="swatch-label">{{ colour }}</span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="swatch-empty">Select a release to see colour suggestions.</p>
+                        {% endif %}
+                    </div>
+                    <input type="text" id="gradient-start-input" name="gradient_start" placeholder="#fffaec">
+                </div>
+                <div class="gradient-column">
+                    <p class="picker-title">End colour</p>
+                    <div class="swatch-list">
+                        {% if gradient_colours %}
+                            {% for colour in gradient_colours %}
+                                <div class="swatch-option">
+                                    <button type="button" class="swatch-button" data-gradient-target="end" data-color="{{ colour }}" style="background-color: {{ colour }};"></button>
+                                    <span class="swatch-label">{{ colour }}</span>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="swatch-empty">Select a release to see colour suggestions.</p>
+                        {% endif %}
+                    </div>
+                    <input type="text" id="gradient-end-input" name="gradient_end" placeholder="#ff11aa">
+                </div>
+            </div>
+        </div>
+
+        <div class="background-option">
+            <input type="radio" id="custom" name="backgroundSelector" value="custom">
+            <label for="custom">Custom</label>
+            <input type="text" name="custom" />
+        </div>
+        <br><br>
+        <input type="submit" id="submit2" value="Submit">
         </form>
     </div>
 </div>
@@ -88,6 +133,85 @@
 .column {
   flex: 50%;
 }
+
+.background-option {
+  margin-bottom: 12px;
+}
+
+.gradient-picker {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.gradient-column {
+  flex: 1;
+}
+
+.picker-title {
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.swatch-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.swatch-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.swatch-button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch-label {
+  font-size: 12px;
+  font-family: monospace;
+}
+
+.swatch-empty {
+  font-size: 14px;
+  color: #555;
+}
+
+#gradient-start-input,
+#gradient-end-input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+}
 </style>
+<script>
+(function () {
+  var swatchButtons = document.querySelectorAll('.swatch-button');
+  var startInput = document.getElementById('gradient-start-input');
+  var endInput = document.getElementById('gradient-end-input');
+
+  swatchButtons.forEach(function (button) {
+    button.addEventListener('click', function () {
+      var target = button.getAttribute('data-gradient-target');
+      var colour = button.getAttribute('data-color');
+      if (target === 'start' && startInput) {
+        startInput.value = colour;
+      }
+      if (target === 'end' && endInput) {
+        endInput.value = colour;
+      }
+    });
+  });
+})();
+</script>
 </body>
 </html>

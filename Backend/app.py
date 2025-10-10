@@ -153,7 +153,9 @@ def createList(album_list):
 def barcode_data_uri(code: str, type, background) -> str:
     # format it correctly ( adds a leading 0 )
     fmt = UPCA if len(code) == 12 else EAN13
-    writer = ImageWriter()
+    transparent_requested = background == "transparent"
+    writer_mode = "RGBA" if transparent_requested else "RGB"
+    writer = ImageWriter(mode=writer_mode)
     # customisation options for the final output image
     opts = {
         "write_text": False,  # ← bars only, no numbers
@@ -168,8 +170,8 @@ def barcode_data_uri(code: str, type, background) -> str:
         default_background = (0, 1, 10)
         opts["foreground"] = (255, 255, 255)
 
-    if background == "transparent":
-        opts["background"] = "transparent"
+    if transparent_requested:
+        opts["background"] = (0, 0, 0, 0)
     elif background is not None:
         opts["background"] = background
     else:
@@ -351,6 +353,10 @@ def index():
             )
             # dynamically load the album cover
             selected_cover_image = get_album_cover(selected_mbid)
+            if selected_cover_image and selected_cover_image.startswith("data:"):
+                gradient_colours = colourExtractor(selected_cover_image)
+            else:
+                gradient_colours = DEFAULT_COLOURS
 
             track_response = get_tracklist(selected_mbid)
             if track_response is not None:
@@ -372,6 +378,7 @@ def index():
                 selected_mbid=selected_mbid,
                 tracklist=tracklist,
                 selected_details=selected_album_information,
+                gradient_colours=gradient_colours,
             )
         # if the album has been fully selected
         if "selected_details" in request.form:
@@ -481,9 +488,9 @@ def index():
             # Create dictionary of results through parsing JSON data
             # pprint(album_list)
             parsed_albums = createList(album_list)
-            return render_template("index.html", releases=parsed_albums)
+            return render_template("index.html", releases=parsed_albums, gradient_colours=None)
     # if no routes are matched, return default template
-    return render_template("index.html")
+    return render_template("index.html", gradient_colours=None)
 
 
 if __name__ == "__main__":
