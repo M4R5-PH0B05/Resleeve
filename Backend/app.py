@@ -21,6 +21,8 @@ app.secret_key = "Testing123!"
 
 DEFAULT_COLOURS = ["#ffffff", "#d4d4d4", "#a0a0a0", "#6c6c6c", "#2c2c2c"]
 DEFAULT_BACKGROUND_GRADIENT = "linear-gradient(45deg, #FFFAEC, #FF11AA)"
+DEFAULT_LIGHT_BODY_COLOUR = "#FFFAEC"
+DEFAULT_LIGHT_CONTAINER_COLOUR = "#FFFAEC"
 TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9SClSxIAAAAASUVORK5CYII="
 MAX_COVER_WORKERS = 10
 
@@ -419,8 +421,8 @@ def index():
                 default_body_background = "#00010A"
                 default_container_background = "#00010A"
             else:
-                default_body_background = DEFAULT_BACKGROUND_GRADIENT
-                default_container_background = "rgb(0 0 0 / 0)"
+                default_body_background = DEFAULT_LIGHT_BODY_COLOUR
+                default_container_background = DEFAULT_LIGHT_CONTAINER_COLOUR
 
             background = "default"
             body_background = default_body_background

@@ -2,216 +2,672 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resleeve</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg-outer: #06060b;
+            --bg-card: rgba(18, 20, 31, 0.72);
+            --bg-card-solid: #131521;
+            --bg-input: rgba(32, 35, 54, 0.9);
+            --bg-input-hover: rgba(44, 48, 70, 0.95);
+            --border-soft: rgba(130, 140, 205, 0.15);
+            --border-strong: rgba(130, 140, 205, 0.25);
+            --text-primary: #f5f7ff;
+            --text-secondary: #c5c8ef;
+            --accent: #7c5cff;
+            --accent-strong: #a88cff;
+            --danger: #ff5f7a;
+            --radius-xl: 28px;
+            --radius-lg: 18px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --shadow-soft: 0 18px 40px rgba(6, 8, 18, 0.45);
+            --shadow-card: 0 24px 60px rgba(6, 8, 18, 0.55);
+            font-family: "Inter", "SF Pro Display", "Segoe UI", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 15% 20%, rgba(124, 92, 255, 0.25), transparent 45%),
+                radial-gradient(circle at 85% 0%, rgba(255, 95, 122, 0.25), transparent 40%),
+                radial-gradient(circle at 50% 120%, rgba(58, 199, 255, 0.18), transparent 40%),
+                var(--bg-outer);
+            color: var(--text-primary);
+            font: 500 16px/1.5 var(--font-stack, "Inter", "Segoe UI", sans-serif);
+        }
+
+        .app-shell {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 48px 28px 64px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            margin-bottom: 36px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: clamp(32px, 5vw, 46px);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        header p {
+            margin: 0;
+            color: var(--text-secondary);
+            max-width: 540px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+            gap: 28px;
+        }
+
+        .column-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .card {
+            position: relative;
+            background: var(--bg-card);
+            backdrop-filter: blur(24px);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-soft);
+            box-shadow: var(--shadow-soft);
+            padding: 28px;
+        }
+
+        .card.dark-solid {
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border-strong);
+            box-shadow: var(--shadow-card);
+        }
+
+        .card h2 {
+            margin: 0 0 18px;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .card h3 {
+            margin: 0 0 14px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .search-form {
+            display: grid;
+            gap: 20px;
+        }
+
+        .field-group label {
+            display: block;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+        }
+
+        input[type="text"],
+        input[type="search"] {
+            width: 100%;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font: inherit;
+            padding: 14px 16px;
+            transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="search"]:focus {
+            outline: none;
+            border-color: rgba(168, 140, 255, 0.6);
+            box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.25);
+            background: var(--bg-input-hover);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border-radius: var(--radius-md);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.01em;
+            transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+            color: #0b0618;
+            box-shadow: 0 14px 36px rgba(124, 92, 255, 0.35);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 18px 42px rgba(124, 92, 255, 0.45);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-strong);
+        }
+
+        .btn-outline:hover {
+            border-color: rgba(168, 140, 255, 0.6);
+            color: var(--text-primary);
+        }
+
+        .release-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+        }
+
+        .release-card {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 18px;
+            border-radius: var(--radius-md);
+            background: rgba(20, 22, 33, 0.8);
+            border: 1px solid rgba(130, 140, 205, 0.18);
+            transition: border 160ms ease, transform 160ms ease;
+            min-height: 100%;
+        }
+
+        .release-card:hover {
+            border-color: rgba(168, 140, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .release-artwork {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: var(--radius-sm);
+            object-fit: cover;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .release-meta {
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: grid;
+            gap: 4px;
+        }
+
+        .release-name {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-primary);
+        }
+
+        .release-form {
+            margin-top: auto;
+        }
+
+        .muted {
+            color: var(--text-secondary);
+        }
+
+        .preview-cover {
+            width: 100%;
+            max-width: 280px;
+            border-radius: var(--radius-md);
+            box-shadow: 0 18px 50px rgba(8, 8, 24, 0.55);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .preview-layout {
+            display: flex;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .preview-info {
+            flex: 1 1 220px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .info-row span:first-child {
+            width: 110px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 12px;
+        }
+
+        .tracklist {
+            margin: 18px 0 0;
+            padding: 18px;
+            border-radius: var(--radius-md);
+            background: rgba(11, 12, 19, 0.55);
+            border: 1px solid rgba(130, 140, 205, 0.12);
+            max-height: 280px;
+            overflow: auto;
+        }
+
+        .tracklist ol {
+            margin: 0;
+            padding-left: 18px;
+            display: grid;
+            gap: 8px;
+            font-size: 14px;
+        }
+
+        .options-form {
+            display: grid;
+            gap: 22px;
+        }
+
+        .option-block {
+            border-radius: var(--radius-md);
+            padding: 18px;
+            background: rgba(11, 13, 20, 0.65);
+            border: 1px solid rgba(130, 140, 205, 0.14);
+            display: grid;
+            gap: 14px;
+        }
+
+        .option-title {
+            margin: 0;
+            font-size: 15px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .radio-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .radio {
+            position: relative;
+        }
+
+        .radio input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+        }
+
+        .radio span {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(130, 140, 205, 0.2);
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: border 160ms ease, background 160ms ease, color 160ms ease;
+        }
+
+        .radio input:checked + span {
+            border-color: rgba(168, 140, 255, 0.65);
+            background: rgba(124, 92, 255, 0.18);
+            color: var(--text-primary);
+            box-shadow: inset 0 0 0 1px rgba(124, 92, 255, 0.25);
+        }
+
+        .gradient-settings {
+            display: grid;
+            gap: 16px;
+        }
+
+        .gradient-picker {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .gradient-column {
+            display: grid;
+            gap: 10px;
+        }
+
+        .swatch-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .swatch-button {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            cursor: pointer;
+            transition: transform 120ms ease, border 120ms ease;
+        }
+
+        .swatch-button:hover {
+            transform: translateY(-1px);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .swatch-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: "IBM Plex Mono", monospace;
+        }
+
+        .custom-field {
+            display: grid;
+            gap: 10px;
+        }
+
+        .empty-state {
+            padding: 32px;
+            border-radius: var(--radius-md);
+            border: 1px dashed rgba(130, 140, 205, 0.2);
+            text-align: center;
+            color: var(--text-secondary);
+            background: rgba(12, 13, 21, 0.45);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(124, 92, 255, 0.16);
+            color: rgba(232, 229, 255, 0.9);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .app-shell {
+                padding: 36px 18px 56px;
+            }
+
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+
+            .card {
+                padding: 22px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="row">
-    <div class="column">
-        <h1>Welcome to Resleeve</h1>
-        <form method="post">
-            <label for="artist">Artist:</label><br>
-            <input type="text" id ="artist" name="artist"><br>
-            <label for="album">Album:</label><br>
-            <input type="text" id ="album" name="album"><br>
-            <br>
-            <input type="submit" id="submit" value="Submit"><br>
-        </form>
-
-        <h1>Options</h1>
-        {% if releases %}
-            <h2>Choose a release:</h2>
-            {% for option_number, release in releases.items() %}
-                <div>
-                    <h3>{{option_number}}</h3>
-                    <img src="{{release['Cover Image']}}" width="200px" height="200px">
-                    <p>Artist: {{release['Artist']}}</p>
-                    <p>Album: {{release['Title']}}</p>
-                    <p>Country: {{release['Country']}}</p>
-                    <p>Track Count: {{release['Track Count']}}</p>
-                    <p>MBID: {{release['MBID']}}</p>
-                    <form method="post">
-                        <input type="hidden" name="selected_artist" value="{{release['Artist']}}">
-                        <input type="hidden" name="selected_album" value="{{release['Title']}}">
-                        <input type="hidden" name="selected_date" value="{{release['Date']}}">
-                        <input type="hidden" name="selected_country" value="{{release['Country']}}">
-                        <input type="hidden" name="selected_track_count" value="{{release['Track Count']}}"><input type="hidden" name="selected_MBID" value="{{release['MBID']}}">
-                        <input type="hidden" name="selected_format" value="{{release['Format']}}">
-                        <input type="hidden" name="selected_type" value="{{release['Release Type']}}">
-                        <input type="hidden" name="selected_barcode" value="{{release['Barcode']}}">
-                        <input type="submit" id="submit-1" value="Select This Release"><br>
-                    </form>
-
-                </div>
-                <hr>
-            {% endfor %}
-        {% endif %}
-    </div>
-    <div class="column">
-        <h1>Testing</h1>
-        <br>
-        <h3>Chosen Album: </h3>
-        <img src="{{selected_cover_image}}" width="200px" height="200px">
-        <p>Artist: {{selected_artist}}</p>
-        <p>Album: {{selected_album}}</p>
-        <p>Country: {{selected_country}}</p>
-        <p>Track Count: {{selected_track_count}}</p>
-        <p>MBID: {{selected_mbid}}</p>
-        {% if tracklist %}
-        <ol>
-            {% for track_num,track_data in tracklist.items() %}
-            <li> {{track_data['title']}} | {{track_data['length']}}</li>
-            {% endfor %}
-        </ol>
-        {% endif %}
-        <h4>Template Style</h4>
-        <form method="post">
-            <input type="hidden" name="selected_details" value="{{selected_details}}">
-            <input type="radio" id="white" name="templateSelector" value="white" checked="checked">
-            <label for="white">White</label>
-            <input type="radio" id="black" name="templateSelector" value="dark">
-            <label for="black">Dark</label>
-        <h4>Background Colour</h4>
-        <div class="background-option">
-            <input type="radio" id="default" name="backgroundSelector" value="default" checked="checked">
-            <label for="default">Default</label>
-        </div>
-
-        <div class="background-option">
-            <input type="radio" id="gradient" name="backgroundSelector" value="gradient">
-            <label for="gradient">Gradient</label>
-            <div class="gradient-picker">
-                <div class="gradient-column">
-                    <p class="picker-title">Start colour</p>
-                    <div class="swatch-list">
-                        {% if gradient_colours %}
-                            {% for colour in gradient_colours %}
-                                <div class="swatch-option">
-                                    <button type="button" class="swatch-button" data-gradient-target="start" data-color="{{ colour }}" style="background-color: {{ colour }};"></button>
-                                    <span class="swatch-label">{{ colour }}</span>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <p class="swatch-empty">Select a release to see colour suggestions.</p>
-                        {% endif %}
-                    </div>
-                    <input type="text" id="gradient-start-input" name="gradient_start" placeholder="#fffaec">
-                </div>
-                <div class="gradient-column">
-                    <p class="picker-title">End colour</p>
-                    <div class="swatch-list">
-                        {% if gradient_colours %}
-                            {% for colour in gradient_colours %}
-                                <div class="swatch-option">
-                                    <button type="button" class="swatch-button" data-gradient-target="end" data-color="{{ colour }}" style="background-color: {{ colour }};"></button>
-                                    <span class="swatch-label">{{ colour }}</span>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <p class="swatch-empty">Select a release to see colour suggestions.</p>
-                        {% endif %}
-                    </div>
-                    <input type="text" id="gradient-end-input" name="gradient_end" placeholder="#ff11aa">
-                </div>
+    <div class="app-shell">
+        <header>
+            <div>
+                <h1>Resleeve</h1>
+                <p>Search releases, preview details, and generate rich desktop wallpapers inspired by album artwork.</p>
             </div>
-        </div>
+            <div class="pill">Dark Mode</div>
+        </header>
 
-        <div class="background-option">
-            <input type="radio" id="custom" name="backgroundSelector" value="custom">
-            <label for="custom">Custom</label>
-            <input type="text" name="custom" />
-        </div>
-        <br><br>
-        <input type="submit" id="submit2" value="Submit">
-        </form>
+        <main class="layout">
+            <div class="column-stack">
+                <section class="card dark-solid">
+                    <h2>Search Catalogue</h2>
+                    <form class="search-form" method="post">
+                        <div class="field-group">
+                            <label for="artist">Artist</label>
+                            <input type="text" id="artist" name="artist" value="{{ request.form.get('artist', '') }}" placeholder="e.g. Björk" required>
+                        </div>
+                        <div class="field-group">
+                            <label for="album">Album</label>
+                            <input type="text" id="album" name="album" value="{{ request.form.get('album', '') }}" placeholder="e.g. Vespertine" required>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Search Releases</button>
+                    </form>
+                </section>
+
+                <section class="card">
+                    <div class="section-header" style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px;">
+                        <h2 style="margin:0;">Releases</h2>
+                        {% if releases %}
+                            <span class="muted" style="font-size:13px;">{{ releases|length }} found</span>
+                        {% endif %}
+                    </div>
+
+                    {% if releases %}
+                        <div class="release-grid">
+                            {% for option_number, release in releases.items() %}
+                                <article class="release-card">
+                                    <img class="release-artwork" src="{{ release['Cover Image'] }}" alt="{{ release['Title'] }} cover art">
+                                    <div class="release-meta">
+                                        <span class="release-name">{{ release['Title'] }}</span>
+                                        <span>{{ release['Artist'] }}</span>
+                                        <span>{{ release['Country'] or 'Unknown origin' }}</span>
+                                        <span>{{ release['Date'] or 'Date TBC' }}</span>
+                                        <span>Tracks · {{ release['Track Count'] or 'N/A' }}</span>
+                                        <span>Format · {{ release['Format'] or 'N/A' }}</span>
+                                    </div>
+                                    <form class="release-form" method="post">
+                                        <input type="hidden" name="selected_artist" value="{{ release['Artist'] }}">
+                                        <input type="hidden" name="selected_album" value="{{ release['Title'] }}">
+                                        <input type="hidden" name="selected_date" value="{{ release['Date'] }}">
+                                        <input type="hidden" name="selected_country" value="{{ release['Country'] }}">
+                                        <input type="hidden" name="selected_track_count" value="{{ release['Track Count'] }}">
+                                        <input type="hidden" name="selected_MBID" value="{{ release['MBID'] }}">
+                                        <input type="hidden" name="selected_format" value="{{ release['Format'] }}">
+                                        <input type="hidden" name="selected_type" value="{{ release['Release Type'] }}">
+                                        <input type="hidden" name="selected_barcode" value="{{ release['Barcode'] }}">
+                                        <button class="btn btn-outline" type="submit">Select Release</button>
+                                    </form>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <strong>No releases yet.</strong>
+                            <p style="margin:12px 0 0;">Search for an artist and album to browse track lists and artwork variations.</p>
+                        </div>
+                    {% endif %}
+                </section>
+            </div>
+
+            <div class="column-stack">
+                <section class="card dark-solid">
+                    <h2>Selected Release</h2>
+                    {% if selected_album %}
+                        <div class="preview-layout">
+                            {% if selected_cover_image %}
+                                <img class="preview-cover" src="{{ selected_cover_image }}" alt="Selected cover art">
+                            {% endif %}
+                            <div class="preview-info">
+                                <div class="info-row"><span>Artist</span><span>{{ selected_artist }}</span></div>
+                                <div class="info-row"><span>Album</span><span>{{ selected_album }}</span></div>
+                                <div class="info-row"><span>Country</span><span>{{ selected_country or '—' }}</span></div>
+                                <div class="info-row"><span>Tracks</span><span>{{ selected_track_count or '—' }}</span></div>
+                                <div class="info-row"><span>MBID</span><span>{{ selected_mbid or '—' }}</span></div>
+                            </div>
+                        </div>
+                        {% if tracklist %}
+                            <div class="tracklist">
+                                <h3 style="margin:0 0 10px;font-size:15px;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;">Tracklist</h3>
+                                <ol>
+                                    {% for track_num, track_data in tracklist.items() %}
+                                        <li>{{ track_data['title'] }} <span class="muted">· {{ track_data['length'] }}</span></li>
+                                    {% endfor %}
+                                </ol>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="empty-state">
+                            <strong>No selection yet.</strong>
+                            <p style="margin:12px 0 0;">Choose a release from the list to preview colours and export options.</p>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="card">
+                    <h2>Wallpaper Options</h2>
+                    <form class="options-form" method="post">
+                        <input type="hidden" name="selected_details" value="{{ selected_details }}">
+
+                        <div class="option-block">
+                            <h3 class="option-title">Template</h3>
+                            {% set template_choice = request.form.get('templateSelector') %}
+                            <div class="radio-group">
+                                <label class="radio">
+                                    <input type="radio" id="template-white" name="templateSelector" value="white" {% if template_choice == 'white' or not template_choice %}checked{% endif %}>
+                                    <span>Light Layout</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" id="template-dark" name="templateSelector" value="dark" {% if template_choice == 'dark' %}checked{% endif %}>
+                                    <span>Dark Layout</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="option-block">
+                            <h3 class="option-title">Background</h3>
+                            <div class="radio-group">
+                                {% set background_choice = request.form.get('backgroundSelector') %}
+                                <label class="radio">
+                                    <input type="radio" id="background-default" name="backgroundSelector" value="default" {% if background_choice in ['default', None, ''] %}checked{% endif %}>
+                                    <span>Default Palette</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" id="background-gradient" name="backgroundSelector" value="gradient" {% if background_choice == 'gradient' %}checked{% endif %}>
+                                    <span>Custom Gradient</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" id="background-custom" name="backgroundSelector" value="custom" {% if background_choice == 'custom' %}checked{% endif %}>
+                                    <span>Single Colour</span>
+                                </label>
+                            </div>
+
+                            <div class="gradient-settings" data-gradient-settings {% if background_choice != 'gradient' %}style="display:none;"{% endif %}>
+                                <div class="gradient-picker">
+                                    <div class="gradient-column">
+                                        <div class="field-group" style="margin:0;">
+                                            <label for="gradient-start-input">Start colour</label>
+                                            <input type="text" id="gradient-start-input" name="gradient_start" placeholder="#fffaec" value="{{ request.form.get('gradient_start', '') }}">
+                                        </div>
+                                        <div class="swatch-list">
+                                            {% if gradient_colours %}
+                                                {% for colour in gradient_colours %}
+                                                    <button type="button" class="swatch-button" data-gradient-target="start" data-color="{{ colour }}" style="background-color: {{ colour }};" title="{{ colour }}"></button>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="muted" style="font-size:13px;">Select a release to see palette suggestions.</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="gradient-column">
+                                        <div class="field-group" style="margin:0;">
+                                            <label for="gradient-end-input">End colour</label>
+                                            <input type="text" id="gradient-end-input" name="gradient_end" placeholder="#ff11aa" value="{{ request.form.get('gradient_end', '') }}">
+                                        </div>
+                                        <div class="swatch-list">
+                                            {% if gradient_colours %}
+                                                {% for colour in gradient_colours %}
+                                                    <button type="button" class="swatch-button" data-gradient-target="end" data-color="{{ colour }}" style="background-color: {{ colour }};" title="{{ colour }}"></button>
+                                                {% endfor %}
+                                            {% else %}
+                                                <span class="muted" style="font-size:13px;">Select a release to see palette suggestions.</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="custom-field" data-custom-field {% if background_choice != 'custom' %}style="display:none;"{% endif %}>
+                                <div class="field-group" style="margin:0;">
+                                    <label for="custom-background">Hex colour</label>
+                                    <input type="text" id="custom-background" name="custom" placeholder="#0b0f1a" value="{{ request.form.get('custom', '') }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary" type="submit">Generate Wallpaper</button>
+                    </form>
+                </section>
+            </div>
+        </main>
     </div>
-</div>
-<style>
-    .row {
-  display: flex;
-}
 
-.column {
-  flex: 50%;
-}
+    <script>
+        (function () {
+            const swatchButtons = document.querySelectorAll('.swatch-button');
+            const gradientStart = document.getElementById('gradient-start-input');
+            const gradientEnd = document.getElementById('gradient-end-input');
+            swatchButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const colour = button.getAttribute('data-color');
+                    const target = button.getAttribute('data-gradient-target');
+                    if (target === 'start' && gradientStart) gradientStart.value = colour;
+                    if (target === 'end' && gradientEnd) gradientEnd.value = colour;
+                });
+            });
+        })();
 
-.background-option {
-  margin-bottom: 12px;
-}
+        (function () {
+            const backgroundRadios = document.querySelectorAll('input[name="backgroundSelector"]');
+            const gradientSettings = document.querySelector('[data-gradient-settings]');
+            const customField = document.querySelector('[data-custom-field]');
 
-.gradient-picker {
-  display: flex;
-  gap: 24px;
-  margin-top: 12px;
-}
+            const syncVisibility = () => {
+                const selected = document.querySelector('input[name="backgroundSelector"]:checked');
+                const value = selected ? selected.value : 'default';
 
-.gradient-column {
-  flex: 1;
-}
+                if (gradientSettings) {
+                    gradientSettings.style.display = value === 'gradient' ? 'grid' : 'none';
+                }
+                if (customField) {
+                    customField.style.display = value === 'custom' ? 'grid' : 'none';
+                }
+            };
 
-.picker-title {
-  margin-bottom: 8px;
-  font-weight: bold;
-}
+            backgroundRadios.forEach((radio) => {
+                radio.addEventListener('change', syncVisibility);
+            });
 
-.swatch-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-bottom: 8px;
-  align-items: center;
-}
-
-.swatch-option {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.swatch-button {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.swatch-label {
-  font-size: 12px;
-  font-family: monospace;
-}
-
-.swatch-empty {
-  font-size: 14px;
-  color: #555;
-}
-
-#gradient-start-input,
-#gradient-end-input {
-  width: 100%;
-  padding: 6px;
-  box-sizing: border-box;
-}
-</style>
-<script>
-(function () {
-  var swatchButtons = document.querySelectorAll('.swatch-button');
-  var startInput = document.getElementById('gradient-start-input');
-  var endInput = document.getElementById('gradient-end-input');
-
-  swatchButtons.forEach(function (button) {
-    button.addEventListener('click', function () {
-      var target = button.getAttribute('data-gradient-target');
-      var colour = button.getAttribute('data-color');
-      if (target === 'start' && startInput) {
-        startInput.value = colour;
-      }
-      if (target === 'end' && endInput) {
-        endInput.value = colour;
-      }
-    });
-  });
-})();
-</script>
+            syncVisibility();
+        })();
+    </script>
 </body>
 </html>
