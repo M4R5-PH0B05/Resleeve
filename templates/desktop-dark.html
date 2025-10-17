@@ -266,7 +266,7 @@
         }
     </style>
 </head>
-<body>
+<body data-background-mode="{{ background }}" data-body-background="{{ body_background }}" data-container-background="{{ container_background }}" data-canvas-fill="#00010A">
     <button id="download-button" type="button" onclick="downloadWallpaper()">Download Wallpaper</button>
     <div class="container">
         <div class="album-cover"></div>
@@ -423,6 +423,27 @@
         clone.style.width = '2060px';
         clone.style.height = '1440px';
 
+        const { bodyBackground = '', backgroundMode = '', containerBackground = '', canvasFill = '' } = document.body.dataset;
+        let normalizedBackground = bodyBackground.trim();
+        if (!normalizedBackground) {
+          const computedBodyBackground = window.getComputedStyle(document.body).background;
+          if (computedBodyBackground && computedBodyBackground !== 'none') {
+            normalizedBackground = computedBodyBackground;
+          }
+        }
+
+        let normalizedContainerBackground = containerBackground.trim();
+        if (!normalizedContainerBackground) {
+          const computedContainerBackground = window.getComputedStyle(source).background;
+          if (computedContainerBackground && computedContainerBackground !== 'none') {
+            normalizedContainerBackground = computedContainerBackground;
+          }
+        }
+        clone.style.background = normalizedContainerBackground || 'transparent';
+        if (!normalizedBackground && backgroundMode && backgroundMode.startsWith('#')) {
+          normalizedBackground = backgroundMode;
+        }
+
         const measurer = document.createElement('div');
         measurer.style.position = 'absolute';
         measurer.style.left = '-99999px';
@@ -491,8 +512,34 @@
             canvas.width = 3840;
             canvas.height = 2160;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#00010A';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const fallbackFill = canvasFill ? canvasFill.trim() : '#00010A';
+            const populateCanvasBackground = () => {
+              let fillValue = normalizedBackground;
+              if (fillValue && /^linear-gradient/i.test(fillValue)) {
+                const match = fillValue.match(/linear-gradient\([^,]+,\s*([^,]+),\s*([^)]+)\)/i);
+                if (match) {
+                  const startColor = match[1].trim();
+                  const endColor = match[2].trim();
+                  const gradient = ctx.createLinearGradient(0, canvas.height, canvas.width, 0);
+                  gradient.addColorStop(0, startColor);
+                  gradient.addColorStop(1, endColor);
+                  ctx.fillStyle = gradient;
+                  ctx.fillRect(0, 0, canvas.width, canvas.height);
+                  return;
+                }
+              }
+              if (!fillValue || fillValue === 'transparent') {
+                if (backgroundMode && backgroundMode.startsWith('#')) {
+                  fillValue = backgroundMode;
+                } else {
+                  fillValue = fallbackFill;
+                }
+              }
+              ctx.fillStyle = fillValue || fallbackFill;
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+            };
+
+            populateCanvasBackground();
 
             const srcWidth = 2060;
             const srcHeight = 1440;
