@@ -546,6 +546,21 @@
                     <h2>Wallpaper Options</h2>
                     <form class="options-form" method="post">
                         <input type="hidden" name="selected_details" value="{{ selected_details }}">
+                        {% set device_choice = request.form.get('wallpaperDevice', 'desktop') %}
+
+                        <div class="option-block">
+                            <h3 class="option-title">Format</h3>
+                            <div class="radio-group">
+                                <label class="radio">
+                                    <input type="radio" id="device-desktop" name="wallpaperDevice" value="desktop" {% if device_choice != 'phone' %}checked{% endif %}>
+                                    <span>Desktop</span>
+                                </label>
+                                <label class="radio">
+                                    <input type="radio" id="device-phone" name="wallpaperDevice" value="phone" {% if device_choice == 'phone' %}checked{% endif %}>
+                                    <span>Phone</span>
+                                </label>
+                            </div>
+                        </div>
 
                         <div class="option-block">
                             <h3 class="option-title">Template</h3>

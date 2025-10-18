@@ -20,9 +20,12 @@ app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.secret_key = "Testing123!"
 
 DEFAULT_COLOURS = ["#ffffff", "#d4d4d4", "#a0a0a0", "#6c6c6c", "#2c2c2c"]
-DEFAULT_BACKGROUND_GRADIENT = "linear-gradient(45deg, #FFFAEC, #FF11AA)"
 DEFAULT_LIGHT_BODY_COLOUR = "#FFFAEC"
 DEFAULT_LIGHT_CONTAINER_COLOUR = "#FFFAEC"
+DEFAULT_DARK_BODY_COLOUR = "#00010A"
+DEFAULT_DARK_CONTAINER_COLOUR = "#00010A"
+DEFAULT_DARK_PHONE_BODY_COLOUR = "#080914"
+DEFAULT_DARK_PHONE_CONTAINER_COLOUR = "#080914"
 TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9SClSxIAAAAASUVORK5CYII="
 MAX_COVER_WORKERS = 10
 
@@ -386,7 +389,8 @@ def index():
         if "selected_details" in request.form:
             # set variables
             selected_details = request.form["selected_details"]
-            template_type = request.form["templateSelector"]
+            template_type = request.form.get("templateSelector", "white")
+            wallpaper_device = request.form.get("wallpaperDevice", "desktop")
 
             details = ast.literal_eval(selected_details)
             track_response = get_tracklist(details[5])
@@ -417,12 +421,26 @@ def index():
                     return None
                 return f"#{hex_part}"
 
-            if template_type == "dark":
-                default_body_background = "#00010A"
-                default_container_background = "#00010A"
+            if template_type not in {"white", "dark"}:
+                template_type = "white"
+
+            if wallpaper_device not in {"desktop", "phone"}:
+                wallpaper_device = "desktop"
+
+            if wallpaper_device == "phone":
+                if template_type == "dark":
+                    default_body_background = DEFAULT_DARK_PHONE_BODY_COLOUR
+                    default_container_background = DEFAULT_DARK_PHONE_CONTAINER_COLOUR
+                else:
+                    default_body_background = DEFAULT_LIGHT_BODY_COLOUR
+                    default_container_background = DEFAULT_LIGHT_CONTAINER_COLOUR
             else:
-                default_body_background = DEFAULT_LIGHT_BODY_COLOUR
-                default_container_background = DEFAULT_LIGHT_CONTAINER_COLOUR
+                if template_type == "dark":
+                    default_body_background = DEFAULT_DARK_BODY_COLOUR
+                    default_container_background = DEFAULT_DARK_CONTAINER_COLOUR
+                else:
+                    default_body_background = DEFAULT_LIGHT_BODY_COLOUR
+                    default_container_background = DEFAULT_LIGHT_CONTAINER_COLOUR
 
             background = "default"
             body_background = default_body_background
@@ -462,8 +480,10 @@ def index():
 
             # return the template with the completed variables
             # print(cover_image)
+            template_prefix = "phone" if wallpaper_device == "phone" else "desktop"
+
             return render_template(
-                f"desktop-{template_type}.html",
+                f"{template_prefix}-{template_type}.html",
                 artist=details[0],
                 album=details[1],
                 date=details[2],
@@ -479,6 +499,7 @@ def index():
                 background=background,
                 body_background=body_background,
                 container_background=container_background,
+                wallpaper_device=wallpaper_device,
             )
 
         else:

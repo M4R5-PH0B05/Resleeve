@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phone Dark (Desktop Layout · 3-Column)</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: Helvetica, Arial, sans-serif;
+      background: {{ body_background }};
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #download-button{
+      position:fixed; top:24px; right:24px; z-index:1000;
+      padding:12px 18px; border:none; border-radius:6px;
+      background:#ffffff; color:#00010A; font-size:16px; cursor:pointer;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+    }
+    #download-button:hover{ opacity:.9; }
+
+    /* Phone canvas (actual exported size) */
+    .canvas {
+      position: absolute;
+      width: 1290px;
+      height: 2796px;
+      background: {{ container_background }};
+      border: 1px solid rgba(255,255,255,0.06);
+      overflow: hidden;
+      /* Preview scale for browser; export ignores this */
+      transform: scale(.36);
+      transform-origin: center;
+    }
+
+    /* Structure mirrors desktop ordering */
+    .wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 56px;
+      color: #DBDBDB;
+    }
+
+    /* Cover + heading block */
+    .album-cover {
+      width: 100%;
+      max-width: 1078px;
+      /* Square cover */
+      aspect-ratio: 1 / 1;
+      background-image: url({{ cover_image }});
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      margin: 0 auto;
+    }
+
+    .artist-name {
+      margin-top: 28px;
+      font-size: 34px;
+      color: #9F9F9F;
+      text-align: left;
+      max-width: 1078px;
+      margin-left: auto; margin-right: auto;
+    }
+
+    .album-title {
+      margin-top: 8px;
+      font-size: 96px;
+      line-height: 1.02;
+      font-weight: bold;
+      color: #DBDBDB;
+      text-align: left;
+      max-width: 1078px;
+      margin-left: auto; margin-right: auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .swatches {
+      display: flex; gap: 16px;
+      margin-top: 16px;
+      max-width: 1078px;
+      margin-left: auto; margin-right: auto;
+    }
+    .swatch { width: 42px; height: 42px; background:#555; }
+
+    .rule {
+      height: 5px; width: 100%; background: #ffffff;
+      opacity: .95; margin: 28px 0 18px;
+    }
+
+    /* Tracklist: 3 columns like screenshot */
+    .tracks {
+      max-width: 1078px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      column-gap: 28px;
+      position: relative;
+    }
+
+    .track-item {
+      position: relative;
+      margin-bottom: 18px;
+      padding-bottom: 16px;
+    }
+    .track-number {
+      font-weight: bold; color:#DBDBDB;
+      font-size: 30px; display:inline-block; min-width: 40px;
+    }
+    .track-title {
+      font-weight: bold; color:#DBDBDB;
+      font-size: 30px; line-height: 1.15; display:inline;
+    }
+    .track-meta {
+      margin-top: 6px; font-size: 20px; color:#9F9F9F;
+    }
+    .track-separator {
+      position: absolute; left: 0; right: 0; bottom: 0;
+      height: 10px; background: #1f2330; border-radius: 5px;
+      overflow: hidden;
+    }
+    .track-progress {
+      height: 10px; background:#9F9F9F; border-radius:5px;
+      width: {{ track_data.pct if track_data and track_data.pct else 50 }}%;
+    }
+
+    .rule-bottom {
+      height: 5px; width: 100%; background: #ffffff;
+      opacity: .95; margin: 18px 0 20px;
+    }
+
+    /* Metadata row */
+    .album-info {
+      max-width: 1078px; margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 22px;
+    }
+    .info-item {}
+    .info-label {
+      font-size: 22px; font-weight: bold; color:#DBDBDB; margin-bottom: 6px;
+      text-transform: none;
+    }
+    .info-value {
+      font-size: 22px; color:#9F9F9F;
+      word-break: break-word;
+    }
+
+    .barcode {
+      max-width: 1078px; margin: 18px auto 0;
+      display:flex; align-items:center;
+    }
+    .barcode img { height: 16px; width: auto; }
+
+    /* Helper for fitting title width to cover */
+    @supports not (aspect-ratio: 1/1) {
+      .album-cover::before { content: ""; display:block; padding-top:100%; }
+    }
+  </style>
+</head>
+<body data-background-mode="{{ background }}" data-body-background="{{ body_background }}" data-container-background="{{ container_background }}" data-canvas-fill="#00010A">
+  <button id="download-button" type="button" onclick="downloadWallpaper()">Download Wallpaper</button>
+
+  <div class="canvas" id="canvas">
+    <div class="wrap">
+      <div class="album-cover"></div>
+
+      {% if artist %}
+        <div class="artist-name">{{ artist }}</div>
+        <div class="album-title">{{ album }}</div>
+      {% else %}
+        <div class="artist-name">Artist</div>
+        <div class="album-title">Album</div>
+      {% endif %}
+
+      <div class="swatches">
+        <div class="swatch" style="background: {{ colours[0] }};"></div>
+        <div class="swatch" style="background: {{ colours[1] }};"></div>
+        <div class="swatch" style="background: {{ colours[2] }};"></div>
+        <div class="swatch" style="background: {{ colours[3] }};"></div>
+        <div class="swatch" style="background: {{ colours[4] }};"></div>
+      </div>
+
+      <div class="rule"></div>
+
+      {% if tracklist %}
+        {% set tracks_all = tracklist.keys() | sort %}
+        {% set total_tracks = tracks_all | length %}
+        {% if total_tracks > 20 %}
+          {% set tracks_all = tracks_all[:20] %}
+          {% set total_tracks = 20 %}
+        {% endif %}
+      {% else %}
+        {% set total_tracks = 12 %}
+      {% endif %}
+
+      {# Compute 3 roughly equal columns #}
+      {% set col_size = ( (total_tracks + 2) // 3 ) | int %}
+      {% set col1 = [] %}
+      {% set col2 = [] %}
+      {% set col3 = [] %}
+
+      {% if tracklist %}
+        {% for i in range(total_tracks) %}
+          {% if i < col_size %}
+            {% set _ = col1.append(tracks_all[i]) %}
+          {% elif i < col_size * 2 %}
+            {% set _ = col2.append(tracks_all[i]) %}
+          {% else %}
+            {% set _ = col3.append(tracks_all[i]) %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+
+      <div class="tracks">
+        {% if tracklist %}
+          <div>
+            {% for key in col1 %}
+              {% set track_data = tracklist[key] %}
+              <div class="track-item">
+                <div><span class="track-number">{{ key }}.</span> <span class="track-title">{{ track_data.title }}</span></div>
+                <div class="track-meta">{{ track_data.length }}{% if track_data.release_date %} · {{ track_data.release_date }}{% endif %}</div>
+                <div class="track-separator"><div class="track-progress" style="width: {{ track_data.pct if track_data.pct else 50 }}%;"></div></div>
+              </div>
+            {% endfor %}
+          </div>
+          <div>
+            {% for key in col2 %}
+              {% set track_data = tracklist[key] %}
+              <div class="track-item">
+                <div><span class="track-number">{{ key }}.</span> <span class="track-title">{{ track_data.title }}</span></div>
+                <div class="track-meta">{{ track_data.length }}{% if track_data.release_date %} · {{ track_data.release_date }}{% endif %}</div>
+                <div class="track-separator"><div class="track-progress" style="width: {{ track_data.pct if track_data.pct else 50 }}%;"></div></div>
+              </div>
+            {% endfor %}
+          </div>
+          <div>
+            {% for key in col3 %}
+              {% set track_data = tracklist[key] %}
+              <div class="track-item">
+                <div><span class="track-number">{{ key }}.</span> <span class="track-title">{{ track_data.title }}</span></div>
+                <div class="track-meta">{{ track_data.length }}{% if track_data.release_date %} · {{ track_data.release_date }}{% endif %}</div>
+                <div class="track-separator"><div class="track-progress" style="width: {{ track_data.pct if track_data.pct else 50 }}%;"></div></div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          {% for i in range(1,13) %}
+            <div class="track-item">
+              <div><span class="track-number">{{ i }}.</span> <span class="track-title">Track {{ i }}</span></div>
+              <div class="track-meta">00:00</div>
+              <div class="track-separator"><div class="track-progress" style="width: 50%;"></div></div>
+            </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <div class="rule-bottom"></div>
+
+      <div class="album-info">
+        <div class="info-item">
+          <div class="info-label">Release Date</div>
+          <div class="info-value">{{ date }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Run Time</div>
+          <div class="info-value">{{ run_time }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Track Count</div>
+          <div class="info-value">{{ track_count }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Country</div>
+          <div class="info-value">{{ country }}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Format</div>
+          <div class="info-value">{{ format }}</div>
+        </div>
+      </div>
+
+      <div class="barcode">
+        <img src="{{ barcode_src }}" alt="barcode">
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function sanitizeFilename(name) {
+      return (name||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+    }
+    function triggerDownloadUrl(href, fileName, revoke=false){
+      const a=document.createElement('a');
+      a.download=fileName; a.href=href; a.rel='noopener';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      if(revoke){ setTimeout(()=>URL.revokeObjectURL(href),1000); }
+    }
+
+    async function downloadWallpaper(){
+      const source=document.getElementById('canvas');
+      if(!source){ alert('Template not ready for download.'); return; }
+
+      const clone=source.cloneNode(true);
+      clone.style.transform='none';
+
+      const { bodyBackground = '', backgroundMode = '', canvasFill = '' } = document.body.dataset;
+      let normalizedBackground = (bodyBackground||'').trim();
+      if(!normalizedBackground){
+        const computed=window.getComputedStyle(document.body).background;
+        if(computed && computed!=='none'){ normalizedBackground = computed; }
+      }
+
+      // Wrap for FO export
+      const foreignBody=document.createElement('div');
+      foreignBody.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
+      const styleNodes=Array.from(document.querySelectorAll('style,link[rel="stylesheet"]'));
+      styleNodes.forEach(n=>foreignBody.appendChild(n.cloneNode(true)));
+      foreignBody.appendChild(clone);
+
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      svg.setAttribute('xmlns','http://www.w3.org/2000/svg');
+      svg.setAttribute('width','1290'); svg.setAttribute('height','2796');
+      svg.setAttribute('viewBox','0 0 1290 2796');
+
+      const fo=document.createElementNS('http://www.w3.org/2000/svg','foreignObject');
+      fo.setAttribute('width','100%'); fo.setAttribute('height','100%');
+      fo.appendChild(foreignBody); svg.appendChild(fo);
+
+      const serializer=new XMLSerializer();
+      const svgMarkup=serializer.serializeToString(svg);
+      const svgUrl=`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgMarkup)}`;
+
+      const img=new Image(); img.crossOrigin='anonymous'; img.decoding='sync';
+      img.onload=()=>{
+        try{
+          const canvas=document.createElement('canvas');
+          canvas.width=1440; canvas.height=3120;
+          const ctx=canvas.getContext('2d');
+          const fallbackFill = (canvasFill||'#00010A').trim();
+
+          // Fill background
+          let fillValue = normalizedBackground;
+          if(!fillValue){
+            if(backgroundMode && backgroundMode.startsWith('#')) fillValue = backgroundMode; else fillValue = fallbackFill;
+          }
+          ctx.fillStyle = fillValue; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+          // Draw scaled
+          const srcW=1290, srcH=2796;
+          const scale=Math.min(canvas.width/srcW, canvas.height/srcH);
+          const dw=srcW*scale, dh=srcH*scale;
+          const ox=(canvas.width-dw)/2, oy=(canvas.height-dh)/2;
+          ctx.drawImage(img,0,0,srcW,srcH,ox,oy,dw,dh);
+
+          const titleEl=document.querySelector('.album-title');
+          const safeTitle = sanitizeFilename(titleEl ? titleEl.textContent.trim() : 'resleeve') || 'resleeve';
+          const fileName = `${safeTitle}-phone-wallpaper.png`;
+
+          if(canvas.toBlob){
+            canvas.toBlob(b=>{
+              if(b){ triggerDownloadUrl(URL.createObjectURL(b), fileName, true); }
+              else { triggerDownloadUrl(canvas.toDataURL('image/png'), fileName, false); }
+            }, 'image/png');
+          } else {
+            triggerDownloadUrl(canvas.toDataURL('image/png'), fileName, false);
+          }
+        }catch(e){ console.error(e); alert('Unable to prepare download.'); }
+      };
+      img.onerror=()=>alert('Unable to prepare download.');
+      img.src=svgUrl;
+    }
+
+    // Fit album title to cover width (simple binary search like desktop helper)
+    async function fitAlbumTitleToCover(){
+      const cover=document.querySelector('.album-cover');
+      const title=document.querySelector('.album-title');
+      if(!cover || !title) return;
+      if(document.fonts && document.fonts.ready){ try{ await document.fonts.ready; }catch(e){} }
+      const max = Math.min(96, cover.clientWidth/8); // heuristic cap
+      let lo=18, hi=max|0, best=lo;
+      title.style.whiteSpace='nowrap';
+      while(lo<=hi){
+        const mid=(lo+hi)>>1;
+        title.style.fontSize = mid+'px';
+        if(title.scrollWidth <= cover.clientWidth){ best=mid; lo=mid+1; } else { hi=mid-1; }
+      }
+      title.style.fontSize = best+'px';
+      title.style.overflow='hidden';
+    }
+    window.addEventListener('load', ()=>{ setTimeout(()=>{ fitAlbumTitleToCover(); }, 120); });
+  </script>
+</body>
+</html>
