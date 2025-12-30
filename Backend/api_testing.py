@@ -1,12 +1,9 @@
-# IMPORTS
 import base64
+import time
+from functools import lru_cache
 
 import requests
 from requests import RequestException
-import json
-import pprintpp
-import time
-# FUNCTIONS & CLASSES
 
 
 '''
@@ -29,56 +26,101 @@ Basic API Call
 https://musicbrainz.org/ws/2/release?query=release:"OK Computer"&fmt=json
 '''
 
-# Search for album releases by artist and album name
+USER_AGENT = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )'}
+COVER_TIMEOUT = 5
+TRACKLIST_TIMEOUT = 10
+
+
+class CoverFetchError(Exception):
+    """Raised when the cover art API cannot provide an image."""
+
+
+class TracklistFetchError(Exception):
+    """Raised when the tracklist API cannot provide data."""
+
+
+class SearchAlbumsError(Exception):
+    """Raised when album search fails entirely."""
+
+
 def search_albums(artist, album):
     url = 'https://musicbrainz.org/ws/2/release'
-    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )'}
-
-    return requests.get(url, headers=headers, params={
-        "query": f"release:'{album}' AND artist:'{artist}'",
-        "fmt": "json"
-    })
-
-# Get detailed tracklist and album info using MBID
-def get_tracklist(mbid):
-    url = f'https://musicbrainz.org/ws/2/release/{mbid}'
-    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )' }
-
     for attempt in range(3):
         try:
             response = requests.get(
                 url,
-                headers=headers,
+                headers=USER_AGENT,
+                params={
+                    "query": f"release:'{album}' AND artist:'{artist}'",
+                    "fmt": "json"
+                },
+                timeout=TRACKLIST_TIMEOUT,
+            )
+            if response.status_code == 200:
+                return response.json()
+            if 400 <= response.status_code < 500:
+                raise SearchAlbumsError
+        except RequestException as exc:
+            if attempt == 2:
+                raise SearchAlbumsError from exc
+        time.sleep(0.5 * (attempt + 1))
+    raise SearchAlbumsError
+
+# Get detailed tracklist and album info using MBID
+@lru_cache(maxsize=256)
+def _fetch_tracklist_json(mbid):
+    url = f'https://musicbrainz.org/ws/2/release/{mbid}'
+    for attempt in range(3):
+        try:
+            response = requests.get(
+                url,
+                headers=USER_AGENT,
                 params={
                     "fmt": "json",
                     "inc": "recordings"
                 },
-                timeout=10
+                timeout=TRACKLIST_TIMEOUT
             )
             if response.status_code == 200:
-                return response
+                return response.json()
             if 400 <= response.status_code < 500:
-                return None
-        except RequestException:
+                raise TracklistFetchError
+        except RequestException as exc:
             if attempt == 2:
-                return None
+                raise TracklistFetchError from exc
         time.sleep(0.5 * (attempt + 1))
-    return None
+    raise TracklistFetchError
+
+
+def get_tracklist(mbid):
+    if not mbid:
+        return None
+    try:
+        return _fetch_tracklist_json(mbid)
+    except TracklistFetchError:
+        return None
 
 # Get album cover art as base64 encoded string
-def get_album_cover(mbid):
+@lru_cache(maxsize=256)
+def _fetch_cover_data(mbid):
     cover_url = f"https://coverartarchive.org/release/{mbid}/front"
-    headers = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )'}
-
     try:
-        response = requests.get(cover_url, headers=headers, timeout=3)  # ← 3s instead of 10s
-        if response.status_code == 200:
-            b64_image = base64.b64encode(response.content).decode('utf-8')
-            content_type = response.headers.get('content-type', 'image/jpeg')
-            return f"data:{content_type};base64,{b64_image}"
-    except RequestException:
-        pass
+        response = requests.get(cover_url, headers=USER_AGENT, timeout=COVER_TIMEOUT)
+    except RequestException as exc:
+        raise CoverFetchError from exc
+    if response.status_code == 200:
+        b64_image = base64.b64encode(response.content).decode('utf-8')
+        content_type = response.headers.get('content-type', 'image/jpeg')
+        return f"data:{content_type};base64,{b64_image}"
+    raise CoverFetchError
 
-    return None
+
+def get_album_cover(mbid):
+    if not mbid:
+        return None
+    try:
+        return _fetch_cover_data(mbid)
+    except CoverFetchError:
+        return None
 
 # print(search_albums("Bring me the horizon","Post Human: Survival Horror").json())

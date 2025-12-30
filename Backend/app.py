@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from api_testing import search_albums, get_tracklist, get_album_cover
+from api_testing import search_albums, get_tracklist, get_album_cover, SearchAlbumsError
 
 # from pprintpp import pprint
 import io
@@ -28,6 +28,7 @@ DEFAULT_DARK_PHONE_BODY_COLOUR = "#080914"
 DEFAULT_DARK_PHONE_CONTAINER_COLOUR = "#080914"
 TRANSPARENT_PIXEL = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9SClSxIAAAAASUVORK5CYII="
 MAX_COVER_WORKERS = 10
+MAX_RELEASE_RESULTS = 18
 
 
 def timeProgram(func):
@@ -73,8 +74,9 @@ def hex_to_rgb(hex_color: str):
 def createList(album_list):
     # First pass: collect all release data without cover art
     releases_data = []
+    releases = album_list.get("releases", [])[:MAX_RELEASE_RESULTS]
 
-    for i, release in enumerate(album_list["releases"]):
+    for release in releases:
         # Set the variables based on the information in the JSON
         artist = release["artist-credit"][0]["name"]
         # Country can be found in two places
@@ -99,7 +101,7 @@ def createList(album_list):
             format = release["media"][0]["format"]
         except Exception:
             format = None
-        release_type = release["release-group"]["primary-type"]
+        release_type = release.get("release-group", {}).get("primary-type")
         # The date variable can be found in two different places - so check both
         date = release.get("date")
         if date is None:
@@ -363,14 +365,12 @@ def index():
             else:
                 gradient_colours = DEFAULT_COLOURS
 
-            track_response = get_tracklist(selected_mbid)
-            if track_response is not None:
-                json_tracklist = track_response.json()
+            track_data = get_tracklist(selected_mbid)
+            if track_data and track_data.get("media"):
                 tracklist, release_length = createTracklist(
-                    json_tracklist["media"][0]["tracks"]
+                    track_data["media"][0]["tracks"]
                 )
             else:
-                json_tracklist = None
                 tracklist, release_length = {}, 0
             # return the index.html template but with the selected album on the right of the screen
             return render_template(
@@ -384,6 +384,7 @@ def index():
                 tracklist=tracklist,
                 selected_details=selected_album_information,
                 gradient_colours=gradient_colours,
+                error_message=None,
             )
         # if the album has been fully selected
         if "selected_details" in request.form:
@@ -393,7 +394,7 @@ def index():
             wallpaper_device = request.form.get("wallpaperDevice", "desktop")
 
             details = ast.literal_eval(selected_details)
-            track_response = get_tracklist(details[5])
+            track_data = get_tracklist(details[5])
             cover_image = get_album_cover(details[5])
             background_choice = request.form.get("backgroundSelector", "default")
             custom_background_raw = request.form.get("custom", "").strip()
@@ -465,13 +466,11 @@ def index():
                     background = "default"
                     barcode_background = None
             # pprint(json_tracklist)
-            if track_response is not None:
-                json_tracklist = track_response.json()
+            if track_data and track_data.get("media"):
                 tracklist, release_length = createTracklist(
-                    json_tracklist["media"][0]["tracks"]
+                    track_data["media"][0]["tracks"]
                 )
             else:
-                json_tracklist = None
                 tracklist, release_length = {}, 0
             if cover_image and cover_image.startswith("data:"):
                 colours = colourExtractor(cover_image)
@@ -507,13 +506,19 @@ def index():
             artist = request.form["artist"]
             album = request.form["album"]
             # Create new API instance
-            album_list = search_albums(artist, album).json()
-            # Create dictionary of results through parsing JSON data
-            # pprint(album_list)
+            try:
+                album_list = search_albums(artist, album)
+            except SearchAlbumsError:
+                return render_template(
+                    "index.html",
+                    releases=None,
+                    gradient_colours=None,
+                    error_message="Could not reach MusicBrainz. Please try again in a moment.",
+                )
             parsed_albums = createList(album_list)
-            return render_template("index.html", releases=parsed_albums, gradient_colours=None)
+            return render_template("index.html", releases=parsed_albums, gradient_colours=None, error_message=None)
     # if no routes are matched, return default template
-    return render_template("index.html", gradient_colours=None)
+    return render_template("index.html", gradient_colours=None, error_message=None)
 
 
 if __name__ == "__main__":
