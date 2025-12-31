@@ -318,6 +318,17 @@
             gap: 22px;
         }
 
+        .form-error {
+            display: none;
+            color: #ff5f7a;
+            font-size: 13px;
+            margin-top: -6px;
+        }
+
+        .form-error.active {
+            display: block;
+        }
+
         .option-block {
             border-radius: var(--radius-md);
             padding: 18px;
@@ -587,7 +598,7 @@
                                 </label>
                                 <label class="radio">
                                     <input type="radio" id="device-phone" name="wallpaperDevice" value="phone" {% if device_choice == 'phone' %}checked{% endif %}>
-{#                                    <span>Phone</span>#}
+                                    <span>Mobile</span>
                                 </label>
                             </div>
                         </div>
@@ -669,6 +680,7 @@
                         </div>
 
                         <button class="btn btn-primary" type="submit">Generate Wallpaper</button>
+                        <p class="form-error" data-options-error></p>
                     </form>
                 </section>
             </div>
@@ -694,11 +706,9 @@
             const backgroundRadios = document.querySelectorAll('input[name="backgroundSelector"]');
             const gradientSettings = document.querySelector('[data-gradient-settings]');
             const customField = document.querySelector('[data-custom-field]');
-
             const syncVisibility = () => {
                 const selected = document.querySelector('input[name="backgroundSelector"]:checked');
                 const value = selected ? selected.value : 'default';
-
                 if (gradientSettings) {
                     gradientSettings.style.display = value === 'gradient' ? 'grid' : 'none';
                 }
@@ -706,12 +716,29 @@
                     customField.style.display = value === 'custom' ? 'grid' : 'none';
                 }
             };
-
             backgroundRadios.forEach((radio) => {
                 radio.addEventListener('change', syncVisibility);
             });
-
             syncVisibility();
+        })();
+
+        (function () {
+            const optionsForm = document.querySelector('.options-form');
+            const selectedDetails = document.querySelector('input[name="selected_details"]');
+            const errorNode = document.querySelector('[data-options-error]');
+            if (!optionsForm) return;
+            optionsForm.addEventListener('submit', (event) => {
+                if (!selectedDetails || !selectedDetails.value.trim()) {
+                    event.preventDefault();
+                    if (errorNode) {
+                        errorNode.textContent = 'Select a release before generating a wallpaper.';
+                        errorNode.classList.add('active');
+                    }
+                } else if (errorNode) {
+                    errorNode.textContent = '';
+                    errorNode.classList.remove('active');
+                }
+            });
         })();
     </script>
 </body>
