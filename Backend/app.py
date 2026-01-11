@@ -1,5 +1,12 @@
-from flask import Flask, render_template, request
-from api_testing import search_albums, get_tracklist, get_album_cover, SearchAlbumsError
+from flask import Flask, render_template, request, jsonify
+from api_testing import (
+    search_albums,
+    get_tracklist,
+    get_album_cover,
+    SearchAlbumsError,
+    get_artist_suggestions,
+    get_album_suggestions,
+)
 
 # from pprintpp import pprint
 import io
@@ -65,6 +72,23 @@ def load_font_data():
 
 
 load_font_data()
+
+
+@app.route("/api/suggest/artist")
+def suggest_artist():
+    query = request.args.get("query", "").strip()
+    if len(query) < 2:
+        return jsonify([])
+    return jsonify(get_artist_suggestions(query))
+
+
+@app.route("/api/suggest/album")
+def suggest_album():
+    artist = request.args.get("artist", "").strip()
+    query = request.args.get("query", "").strip()
+    if len(artist) < 2 or len(query) < 1:
+        return jsonify([])
+    return jsonify(get_album_suggestions(artist, query))
 
 
 def timeProgram(func):

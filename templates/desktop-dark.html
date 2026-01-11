@@ -461,6 +461,7 @@
           normalizedBackground = backgroundMode;
         }
 
+        const coverSource = {{ cover_image | tojson }};
         const coverEl = document.querySelector('.album-cover img');
         const coverMeta = (() => {
           if (!source || !coverEl) return null;
@@ -470,7 +471,7 @@
           const scale = sourceRect.width / baseWidth;
           if (!scale) return null;
           return {
-            src: coverEl.currentSrc || coverEl.src,
+            src: coverSource || coverEl.currentSrc || coverEl.src || coverEl.getAttribute('src'),
             x: (coverRect.left - sourceRect.left) / scale,
             y: (coverRect.top - sourceRect.top) / scale,
             width: coverRect.width / scale,

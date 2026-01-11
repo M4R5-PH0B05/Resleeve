@@ -29,6 +29,8 @@ https://musicbrainz.org/ws/2/release?query=release:"OK Computer"&fmt=json
 USER_AGENT = {'User-Agent': 'Resleeve/1.0 ( morganbennett100@gmail.com )'}
 COVER_TIMEOUT = 5
 TRACKLIST_TIMEOUT = 10
+SUGGEST_TIMEOUT = 5
+SUGGEST_LIMIT = 6
 
 
 class CoverFetchError(Exception):
@@ -65,6 +67,87 @@ def search_albums(artist, album):
                 raise SearchAlbumsError from exc
         time.sleep(0.5 * (attempt + 1))
     raise SearchAlbumsError
+
+
+def _unique_first(items):
+    seen = set()
+    results = []
+    for item in items:
+        if not item:
+            continue
+        if item in seen:
+            continue
+        seen.add(item)
+        results.append(item)
+    return results
+
+
+@lru_cache(maxsize=512)
+def _fetch_artist_suggestions(query):
+    url = 'https://musicbrainz.org/ws/2/artist'
+    for attempt in range(3):
+        try:
+            response = requests.get(
+                url,
+                headers=USER_AGENT,
+                params={
+                    "query": f'artist:"{query}"',
+                    "fmt": "json",
+                    "limit": SUGGEST_LIMIT,
+                },
+                timeout=SUGGEST_TIMEOUT,
+            )
+            if response.status_code == 200:
+                artists = response.json().get("artists", [])
+                names = [artist.get("name") for artist in artists]
+                return _unique_first(names)[:SUGGEST_LIMIT]
+            if 400 <= response.status_code < 500:
+                return []
+        except RequestException:
+            if attempt == 2:
+                return []
+        time.sleep(0.25 * (attempt + 1))
+    return []
+
+
+@lru_cache(maxsize=512)
+def _fetch_album_suggestions(artist, query):
+    url = 'https://musicbrainz.org/ws/2/release'
+    for attempt in range(3):
+        try:
+            response = requests.get(
+                url,
+                headers=USER_AGENT,
+                params={
+                    "query": f'release:"{query}" AND artist:"{artist}"',
+                    "fmt": "json",
+                    "limit": SUGGEST_LIMIT,
+                },
+                timeout=SUGGEST_TIMEOUT,
+            )
+            if response.status_code == 200:
+                releases = response.json().get("releases", [])
+                titles = [release.get("title") for release in releases]
+                return _unique_first(titles)[:SUGGEST_LIMIT]
+            if 400 <= response.status_code < 500:
+                return []
+        except RequestException:
+            if attempt == 2:
+                return []
+        time.sleep(0.25 * (attempt + 1))
+    return []
+
+
+def get_artist_suggestions(query):
+    if not query:
+        return []
+    return _fetch_artist_suggestions(query)
+
+
+def get_album_suggestions(artist, query):
+    if not artist or not query:
+        return []
+    return _fetch_album_suggestions(artist, query)
 
 # Get detailed tracklist and album info using MBID
 @lru_cache(maxsize=256)
