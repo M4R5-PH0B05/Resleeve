@@ -58,11 +58,18 @@
             top: 57px;
             width: 680px;
             height: 680px;
-            background-image: url({{cover_image}});
             background-color: grey;
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
+            overflow: hidden;
+        }
+
+        .album-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
 
         .artist-name {
@@ -269,7 +276,9 @@
 <body data-background-mode="{{ background }}" data-body-background="{{ body_background }}" data-container-background="{{ container_background }}" data-canvas-fill="#00010A">
     <button id="download-button" type="button" onclick="downloadWallpaper()">Download Wallpaper</button>
     <div class="container">
-        <div class="album-cover"></div>
+        <div class="album-cover">
+            <img src="{{ cover_image }}" alt="Album cover">
+        </div>
 
         {% if artist %}
             <div class="artist-name">{{artist}}</div>
@@ -424,6 +433,14 @@
         clone.style.height = '1440px';
 
         const { bodyBackground = '', backgroundMode = '', containerBackground = '', canvasFill = '' } = document.body.dataset;
+        const cloneCover = clone.querySelector('.album-cover');
+        if (cloneCover) {
+          const cloneCoverImg = cloneCover.querySelector('img');
+          if (cloneCoverImg) {
+            cloneCoverImg.remove();
+          }
+          cloneCover.style.backgroundColor = 'transparent';
+        }
         let normalizedBackground = bodyBackground.trim();
         if (!normalizedBackground) {
           const computedBodyBackground = window.getComputedStyle(document.body).background;
@@ -442,6 +459,40 @@
         clone.style.background = normalizedContainerBackground || 'transparent';
         if (!normalizedBackground && backgroundMode && backgroundMode.startsWith('#')) {
           normalizedBackground = backgroundMode;
+        }
+
+        const coverEl = document.querySelector('.album-cover img');
+        const coverMeta = (() => {
+          if (!source || !coverEl) return null;
+          const sourceRect = source.getBoundingClientRect();
+          const coverRect = coverEl.getBoundingClientRect();
+          const baseWidth = 2060;
+          const scale = sourceRect.width / baseWidth;
+          if (!scale) return null;
+          return {
+            src: coverEl.currentSrc || coverEl.src,
+            x: (coverRect.left - sourceRect.left) / scale,
+            y: (coverRect.top - sourceRect.top) / scale,
+            width: coverRect.width / scale,
+            height: coverRect.height / scale,
+          };
+        })();
+
+        const waitForImages = (root) => Promise.all(
+          Array.from(root.querySelectorAll('img')).map((img) => {
+            if (img.complete && img.naturalWidth) return Promise.resolve();
+            return new Promise((resolve) => {
+              const done = () => resolve();
+              img.addEventListener('load', done, { once: true });
+              img.addEventListener('error', done, { once: true });
+            });
+          })
+        );
+        try {
+          await waitForImages(source);
+          await waitForImages(clone);
+        } catch (err) {
+          console.warn('Image readiness issue', err);
         }
 
         const measurer = document.createElement('div');
@@ -477,6 +528,9 @@
         const bottomPadding = Math.max(0, cloneRect.height - maxBottom);
         const delta = (bottomPadding - topPadding) / 2;
         clone.style.transform = `translateY(${delta}px)`;
+        if (coverMeta) {
+          coverMeta.y += delta;
+        }
 
         measurer.remove();
 
@@ -558,17 +612,38 @@
 
             const finish = href => triggerDownloadUrl(href, fileName, href.startsWith('blob:'));
 
-            if (canvas.toBlob) {
-              canvas.toBlob(pngBlob => {
-                if (pngBlob) {
-                  const downloadUrl = URL.createObjectURL(pngBlob);
-                  finish(downloadUrl);
-                } else {
-                  finish(canvas.toDataURL('image/png'));
-                }
-              }, 'image/png');
+            const finalizeDownload = () => {
+              if (canvas.toBlob) {
+                canvas.toBlob(pngBlob => {
+                  if (pngBlob) {
+                    const downloadUrl = URL.createObjectURL(pngBlob);
+                    finish(downloadUrl);
+                  } else {
+                    finish(canvas.toDataURL('image/png'));
+                  }
+                }, 'image/png');
+              } else {
+                finish(canvas.toDataURL('image/png'));
+              }
+            };
+
+            if (coverMeta && coverMeta.src) {
+              const overlayImg = new Image();
+              overlayImg.crossOrigin = 'anonymous';
+              overlayImg.onload = () => {
+                ctx.drawImage(
+                  overlayImg,
+                  offsetX + coverMeta.x * scale,
+                  offsetY + coverMeta.y * scale,
+                  coverMeta.width * scale,
+                  coverMeta.height * scale
+                );
+                finalizeDownload();
+              };
+              overlayImg.onerror = () => finalizeDownload();
+              overlayImg.src = coverMeta.src;
             } else {
-              finish(canvas.toDataURL('image/png'));
+              finalizeDownload();
             }
           } catch (err) {
             console.error(err);
