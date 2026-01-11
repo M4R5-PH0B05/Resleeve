@@ -125,6 +125,10 @@
             color: var(--text-secondary);
         }
 
+        .field-group.autocomplete {
+            position: relative;
+        }
+
         input[type="text"],
         input[type="search"] {
             width: 100%;
@@ -143,6 +147,46 @@
             border-color: rgba(168, 140, 255, 0.6);
             box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.25);
             background: var(--bg-input-hover);
+        }
+
+        .suggestions {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            right: 0;
+            background: rgba(14, 16, 26, 0.98);
+            border: 1px solid rgba(130, 140, 205, 0.25);
+            border-radius: var(--radius-md);
+            box-shadow: 0 16px 38px rgba(6, 8, 18, 0.5);
+            padding: 6px;
+            display: none;
+            z-index: 30;
+        }
+
+        .suggestions.active {
+            display: block;
+        }
+
+        .suggestion-item {
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            font: inherit;
+        }
+
+        .suggestion-item:hover,
+        .suggestion-item:focus {
+            outline: none;
+            background: rgba(124, 92, 255, 0.2);
+        }
+
+        .suggestion-item.active {
+            background: rgba(124, 92, 255, 0.32);
         }
 
         .btn {
@@ -451,6 +495,50 @@
             letter-spacing: 0.06em;
         }
 
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(5, 6, 12, 0.82);
+            backdrop-filter: blur(6px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 200ms ease;
+            z-index: 50;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .loading-card {
+            display: grid;
+            gap: 10px;
+            justify-items: center;
+            padding: 24px 28px;
+            border-radius: var(--radius-lg);
+            border: 1px solid rgba(130, 140, 205, 0.2);
+            background: rgba(16, 18, 30, 0.95);
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid rgba(124, 92, 255, 0.35);
+            border-top-color: var(--accent);
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 1024px) {
             .layout {
                 grid-template-columns: 1fr;
@@ -475,6 +563,12 @@
     </style>
 </head>
 <body>
+    <div class="loading-overlay" data-loading>
+        <div class="loading-card">
+            <div class="spinner"></div>
+            <div>Searching releases...</div>
+        </div>
+    </div>
     <div class="app-shell">
         <header>
             <div>
@@ -489,13 +583,15 @@
                 <section class="card dark-solid">
                     <h2>Search Catalogue</h2>
                     <form class="search-form" method="post">
-                        <div class="field-group">
+                        <div class="field-group autocomplete">
                             <label for="artist">Artist</label>
-                            <input type="text" id="artist" name="artist" value="{{ request.form.get('artist', '') }}" placeholder="e.g. Björk" required>
+                            <input type="text" id="artist" name="artist" value="{{ request.form.get('artist', '') }}" placeholder="e.g. Björk" autocomplete="off" required>
+                            <div class="suggestions" data-suggestions="artist"></div>
                         </div>
-                        <div class="field-group">
+                        <div class="field-group autocomplete">
                             <label for="album">Album</label>
-                            <input type="text" id="album" name="album" value="{{ request.form.get('album', '') }}" placeholder="e.g. Vespertine" required>
+                            <input type="text" id="album" name="album" value="{{ request.form.get('album', '') }}" placeholder="e.g. Vespertine" autocomplete="off" required>
+                            <div class="suggestions" data-suggestions="album"></div>
                         </div>
                         <button class="btn btn-primary" type="submit">Search Releases</button>
                     </form>
@@ -688,6 +784,176 @@
     </div>
 
     <script>
+        (function () {
+            const loadingOverlay = document.querySelector('[data-loading]');
+            const searchForm = document.querySelector('.search-form');
+            if (!loadingOverlay || !searchForm) return;
+            searchForm.addEventListener('submit', () => {
+                loadingOverlay.classList.add('active');
+            });
+        })();
+
+        (function () {
+            const artistInput = document.getElementById('artist');
+            const albumInput = document.getElementById('album');
+            const artistBox = document.querySelector('[data-suggestions="artist"]');
+            const albumBox = document.querySelector('[data-suggestions="album"]');
+            if (!artistInput || !albumInput || !artistBox || !albumBox) return;
+
+            const getWrapper = (input) => input.closest('.field-group.autocomplete');
+            const debounce = (fn, delay = 250) => {
+                let timer;
+                return (...args) => {
+                    window.clearTimeout(timer);
+                    timer = window.setTimeout(() => fn(...args), delay);
+                };
+            };
+
+            const hideBox = (box) => {
+                box.classList.remove('active');
+                box.innerHTML = '';
+            };
+
+            const renderSuggestions = (box, items, input, state) => {
+                if (!items || !items.length) {
+                    hideBox(box);
+                    state.items = [];
+                    state.activeIndex = -1;
+                    return;
+                }
+                box.innerHTML = '';
+                state.items = items.slice();
+                state.activeIndex = -1;
+                items.forEach((item, index) => {
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'suggestion-item';
+                    button.textContent = item;
+                    button.addEventListener('click', () => {
+                        input.value = item;
+                        hideBox(box);
+                        state.activeIndex = -1;
+                        input.focus();
+                    });
+                    button.addEventListener('mouseenter', () => {
+                        state.activeIndex = index;
+                        updateActive(box, state);
+                    });
+                    box.appendChild(button);
+                });
+                box.classList.add('active');
+            };
+
+            const updateActive = (box, state) => {
+                const buttons = Array.from(box.querySelectorAll('.suggestion-item'));
+                buttons.forEach((btn, idx) => {
+                    if (idx === state.activeIndex) {
+                        btn.classList.add('active');
+                        btn.setAttribute('aria-selected', 'true');
+                        btn.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        btn.classList.remove('active');
+                        btn.removeAttribute('aria-selected');
+                    }
+                });
+            };
+
+            const fetchSuggestions = async (url) => {
+                try {
+                    const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!response.ok) return [];
+                    const data = await response.json();
+                    return Array.isArray(data) ? data : [];
+                } catch (err) {
+                    return [];
+                }
+            };
+
+            const artistState = { items: [], activeIndex: -1 };
+            const albumState = { items: [], activeIndex: -1 };
+
+            const updateArtist = debounce(async () => {
+                const query = artistInput.value.trim();
+                if (query.length < 2) {
+                    hideBox(artistBox);
+                    artistState.items = [];
+                    artistState.activeIndex = -1;
+                    return;
+                }
+                const data = await fetchSuggestions(`/api/suggest/artist?query=${encodeURIComponent(query)}`);
+                renderSuggestions(artistBox, data, artistInput, artistState);
+            });
+
+            const updateAlbum = debounce(async () => {
+                const artist = artistInput.value.trim();
+                const query = albumInput.value.trim();
+                if (artist.length < 2 || query.length < 1) {
+                    hideBox(albumBox);
+                    albumState.items = [];
+                    albumState.activeIndex = -1;
+                    return;
+                }
+                const data = await fetchSuggestions(`/api/suggest/album?artist=${encodeURIComponent(artist)}&query=${encodeURIComponent(query)}`);
+                renderSuggestions(albumBox, data, albumInput, albumState);
+            });
+
+            artistInput.addEventListener('input', updateArtist);
+            artistInput.addEventListener('focus', updateArtist);
+            albumInput.addEventListener('input', updateAlbum);
+            albumInput.addEventListener('focus', updateAlbum);
+
+            const handleKeydown = (event, box, input, state) => {
+                if (!box.classList.contains('active') || !state.items.length) return;
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    const delta = event.key === 'ArrowDown' ? 1 : -1;
+                    const nextIndex = (state.activeIndex + delta + state.items.length) % state.items.length;
+                    state.activeIndex = nextIndex;
+                    updateActive(box, state);
+                } else if (event.key === 'Enter') {
+                    if (state.activeIndex >= 0 && state.activeIndex < state.items.length) {
+                        event.preventDefault();
+                        input.value = state.items[state.activeIndex];
+                        hideBox(box);
+                        state.activeIndex = -1;
+                    }
+                } else if (event.key === 'Escape') {
+                    hideBox(box);
+                    state.activeIndex = -1;
+                }
+            };
+
+            artistInput.addEventListener('keydown', (event) => handleKeydown(event, artistBox, artistInput, artistState));
+            albumInput.addEventListener('keydown', (event) => handleKeydown(event, albumBox, albumInput, albumState));
+
+            const installFocusHandling = (input, box, state) => {
+                const wrapper = getWrapper(input);
+                if (!wrapper) return;
+                wrapper.addEventListener('focusout', () => {
+                    window.setTimeout(() => {
+                        const active = document.activeElement;
+                        if (!wrapper.contains(active)) {
+                            hideBox(box);
+                            state.activeIndex = -1;
+                        }
+                    }, 0);
+                });
+            };
+
+            installFocusHandling(artistInput, artistBox, artistState);
+            installFocusHandling(albumInput, albumBox, albumState);
+
+            document.addEventListener('click', (event) => {
+                const target = event.target;
+                if (!target.closest('.field-group.autocomplete')) {
+                    hideBox(artistBox);
+                    hideBox(albumBox);
+                    artistState.activeIndex = -1;
+                    albumState.activeIndex = -1;
+                }
+            });
+        })();
+
         (function () {
             const swatchButtons = document.querySelectorAll('.swatch-button');
             const gradientStart = document.getElementById('gradient-start-input');

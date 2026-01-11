@@ -385,6 +385,7 @@
       const clone=source.cloneNode(true);
       clone.style.transform='none';
 
+      const coverSource = {{ cover_image | tojson }};
       const coverEl=document.querySelector('.album-cover img');
       const coverMeta=(()=>{
         if(!source || !coverEl) return null;
@@ -394,7 +395,7 @@
         const scale=canvasRect.width/baseWidth;
         if(!scale) return null;
         return {
-          src: coverEl.currentSrc || coverEl.src,
+          src: coverSource || coverEl.currentSrc || coverEl.src || coverEl.getAttribute('src'),
           x: (coverRect.left - canvasRect.left)/scale,
           y: (coverRect.top - canvasRect.top)/scale,
           width: coverRect.width/scale,
