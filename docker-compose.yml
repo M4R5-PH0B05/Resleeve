@@ -1,0 +1,12 @@
+services:
+  resleeve:
+    image: python:3.11
+    working_dir: /app
+    environment:
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - .:/app
+    ports:
+      - "5001:5001"
+    command: >
+      sh -c "pip install --no-cache-dir flask requests python-barcode pillow numpy matplotlib && python Backend/app.py"

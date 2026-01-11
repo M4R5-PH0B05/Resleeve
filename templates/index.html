@@ -182,10 +182,28 @@
             color: var(--text-primary);
         }
 
+        .notice {
+            padding: 14px 18px;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 18px;
+            font-size: 14px;
+        }
+
+        .notice-error {
+            background: rgba(255, 95, 122, 0.12);
+            border-color: rgba(255, 95, 122, 0.4);
+            color: #ffb2c1;
+        }
+
         .release-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
             gap: 18px;
+        }
+
+        .release-form {
+            margin: 0;
         }
 
         .release-card {
@@ -195,14 +213,27 @@
             padding: 18px;
             border-radius: var(--radius-md);
             background: rgba(20, 22, 33, 0.8);
-            border: 1px solid rgba(130, 140, 205, 0.18);
             transition: border 160ms ease, transform 160ms ease;
             min-height: 100%;
+            width: 100%;
+            cursor: pointer;
+            color: inherit;
+            font: inherit;
+            text-align: left;
+            background-clip: padding-box;
+            box-shadow: none;
+            outline: none;
+            border: 1px solid rgba(130, 140, 205, 0.18);
         }
 
         .release-card:hover {
             border-color: rgba(168, 140, 255, 0.5);
             transform: translateY(-2px);
+        }
+
+        .release-card:focus-visible {
+            border-color: rgba(168, 140, 255, 0.8);
+            box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.3);
         }
 
         .release-artwork {
@@ -224,10 +255,6 @@
             font-weight: 600;
             font-size: 15px;
             color: var(--text-primary);
-        }
-
-        .release-form {
-            margin-top: auto;
         }
 
         .muted {
@@ -289,6 +316,17 @@
         .options-form {
             display: grid;
             gap: 22px;
+        }
+
+        .form-error {
+            display: none;
+            color: #ff5f7a;
+            font-size: 13px;
+            margin-top: -6px;
+        }
+
+        .form-error.active {
+            display: block;
         }
 
         .option-block {
@@ -471,32 +509,35 @@
                         {% endif %}
                     </div>
 
+                    {% if error_message %}
+                        <div class="notice notice-error">{{ error_message }}</div>
+                    {% endif %}
+
                     {% if releases %}
                         <div class="release-grid">
                             {% for option_number, release in releases.items() %}
-                                <article class="release-card">
-                                    <img class="release-artwork" src="{{ release['Cover Image'] }}" alt="{{ release['Title'] }} cover art">
-                                    <div class="release-meta">
-                                        <span class="release-name">{{ release['Title'] }}</span>
-                                        <span>{{ release['Artist'] }}</span>
-                                        <span>{{ release['Country'] or 'Unknown origin' }}</span>
-                                        <span>{{ release['Date'] or 'Date TBC' }}</span>
-                                        <span>Tracks · {{ release['Track Count'] or 'N/A' }}</span>
-                                        <span>Format · {{ release['Format'] or 'N/A' }}</span>
-                                    </div>
-                                    <form class="release-form" method="post">
-                                        <input type="hidden" name="selected_artist" value="{{ release['Artist'] }}">
-                                        <input type="hidden" name="selected_album" value="{{ release['Title'] }}">
-                                        <input type="hidden" name="selected_date" value="{{ release['Date'] }}">
-                                        <input type="hidden" name="selected_country" value="{{ release['Country'] }}">
-                                        <input type="hidden" name="selected_track_count" value="{{ release['Track Count'] }}">
-                                        <input type="hidden" name="selected_MBID" value="{{ release['MBID'] }}">
-                                        <input type="hidden" name="selected_format" value="{{ release['Format'] }}">
-                                        <input type="hidden" name="selected_type" value="{{ release['Release Type'] }}">
-                                        <input type="hidden" name="selected_barcode" value="{{ release['Barcode'] }}">
-                                        <button class="btn btn-outline" type="submit">Select Release</button>
-                                    </form>
-                                </article>
+                                <form class="release-form" method="post">
+                                    <input type="hidden" name="selected_artist" value="{{ release['Artist'] }}">
+                                    <input type="hidden" name="selected_album" value="{{ release['Title'] }}">
+                                    <input type="hidden" name="selected_date" value="{{ release['Date'] }}">
+                                    <input type="hidden" name="selected_country" value="{{ release['Country'] }}">
+                                    <input type="hidden" name="selected_track_count" value="{{ release['Track Count'] }}">
+                                    <input type="hidden" name="selected_MBID" value="{{ release['MBID'] }}">
+                                    <input type="hidden" name="selected_format" value="{{ release['Format'] }}">
+                                    <input type="hidden" name="selected_type" value="{{ release['Release Type'] }}">
+                                    <input type="hidden" name="selected_barcode" value="{{ release['Barcode'] }}">
+                                    <button class="release-card" type="submit">
+                                        <img class="release-artwork" src="{{ release['Cover Image'] }}" alt="{{ release['Title'] }} cover art">
+                                        <div class="release-meta">
+                                            <span class="release-name">{{ release['Title'] }}</span>
+                                            <span>{{ release['Artist'] }}</span>
+                                            <span>{{ release['Country'] or 'Unknown origin' }}</span>
+                                            <span>{{ release['Date'] or 'Date TBC' }}</span>
+                                            <span>Tracks · {{ release['Track Count'] or 'N/A' }}</span>
+                                            <span>Format · {{ release['Format'] or 'N/A' }}</span>
+                                        </div>
+                                    </button>
+                                </form>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -544,7 +585,7 @@
 
                 <section class="card">
                     <h2>Wallpaper Options</h2>
-                    <form class="options-form" method="post">
+                    <form class="options-form" method="post" target="_blank">
                         <input type="hidden" name="selected_details" value="{{ selected_details }}">
                         {% set device_choice = request.form.get('wallpaperDevice', 'desktop') %}
 
@@ -557,7 +598,7 @@
                                 </label>
                                 <label class="radio">
                                     <input type="radio" id="device-phone" name="wallpaperDevice" value="phone" {% if device_choice == 'phone' %}checked{% endif %}>
-{#                                    <span>Phone</span>#}
+                                    <span>Mobile</span>
                                 </label>
                             </div>
                         </div>
@@ -639,6 +680,7 @@
                         </div>
 
                         <button class="btn btn-primary" type="submit">Generate Wallpaper</button>
+                        <p class="form-error" data-options-error></p>
                     </form>
                 </section>
             </div>
@@ -664,11 +706,9 @@
             const backgroundRadios = document.querySelectorAll('input[name="backgroundSelector"]');
             const gradientSettings = document.querySelector('[data-gradient-settings]');
             const customField = document.querySelector('[data-custom-field]');
-
             const syncVisibility = () => {
                 const selected = document.querySelector('input[name="backgroundSelector"]:checked');
                 const value = selected ? selected.value : 'default';
-
                 if (gradientSettings) {
                     gradientSettings.style.display = value === 'gradient' ? 'grid' : 'none';
                 }
@@ -676,12 +716,29 @@
                     customField.style.display = value === 'custom' ? 'grid' : 'none';
                 }
             };
-
             backgroundRadios.forEach((radio) => {
                 radio.addEventListener('change', syncVisibility);
             });
-
             syncVisibility();
+        })();
+
+        (function () {
+            const optionsForm = document.querySelector('.options-form');
+            const selectedDetails = document.querySelector('input[name="selected_details"]');
+            const errorNode = document.querySelector('[data-options-error]');
+            if (!optionsForm) return;
+            optionsForm.addEventListener('submit', (event) => {
+                if (!selectedDetails || !selectedDetails.value.trim()) {
+                    event.preventDefault();
+                    if (errorNode) {
+                        errorNode.textContent = 'Select a release before generating a wallpaper.';
+                        errorNode.classList.add('active');
+                    }
+                } else if (errorNode) {
+                    errorNode.textContent = '';
+                    errorNode.classList.remove('active');
+                }
+            });
         })();
     </script>
 </body>

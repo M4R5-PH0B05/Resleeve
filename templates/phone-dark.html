@@ -5,9 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Phone Dark (Desktop Layout · 3-Column)</title>
   <style>
+    {% if font_regular_ttf or font_regular_woff or font_bold_ttf or font_bold_woff %}
+    @font-face {
+      font-family: 'ResleeveSans';
+      src:
+        {% if font_regular_woff %}url("data:font/woff;base64,{{ font_regular_woff | safe }}") format("woff"){% if font_regular_ttf %},{% endif %}{% endif %}
+        {% if font_regular_ttf %}url("data:font/ttf;base64,{{ font_regular_ttf | safe }}") format("truetype"){% endif %};
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'ResleeveSans';
+      src:
+        {% if font_bold_woff %}url("data:font/woff;base64,{{ font_bold_woff | safe }}") format("woff"){% if font_bold_ttf %},{% endif %}{% endif %}
+        {% if font_bold_ttf %}url("data:font/ttf;base64,{{ font_bold_ttf | safe }}") format("truetype"){% endif %};
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'ResleeveSans';
+      src:
+        {% if font_bold_woff %}url("data:font/woff;base64,{{ font_bold_woff | safe }}") format("woff"){% if font_bold_ttf %},{% endif %}{% endif %}
+        {% if font_bold_ttf %}url("data:font/ttf;base64,{{ font_bold_ttf | safe }}") format("truetype"){% endif %};
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    {% endif %}
+
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: Helvetica, Arial, sans-serif;
+      font-family: 'ResleeveSans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
       background: {{ body_background }};
       min-height: 100vh;
       display: flex;
@@ -52,11 +83,17 @@
       max-width: 1078px;
       /* Square cover */
       aspect-ratio: 1 / 1;
-      background-image: url({{ cover_image }});
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
       margin: 0 auto;
+      border-radius: 48px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+    }
+
+    .album-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
     }
 
     .artist-name {
@@ -168,9 +205,11 @@
 <body data-background-mode="{{ background }}" data-body-background="{{ body_background }}" data-container-background="{{ container_background }}" data-canvas-fill="#00010A">
   <button id="download-button" type="button" onclick="downloadWallpaper()">Download Wallpaper</button>
 
-  <div class="canvas" id="canvas">
+  <div class="canvas" id="canvas" data-canvas-width="1290" data-canvas-height="2796">
     <div class="wrap">
-      <div class="album-cover"></div>
+      <div class="album-cover">
+        <img src="{{ cover_image }}" alt="Album cover">
+      </div>
 
       {% if artist %}
         <div class="artist-name">{{ artist }}</div>
@@ -294,6 +333,41 @@
   </div>
 
   <script>
+    (function () {
+      {% if font_regular_ttf or font_regular_woff or font_bold_ttf or font_bold_woff %}
+      if (window.FontFace) {
+        try {
+          const faces = [];
+          const regularWoff = {{ font_regular_woff | tojson | safe }};
+          const regularTtf = {{ font_regular_ttf | tojson | safe }};
+          const boldWoff = {{ font_bold_woff | tojson | safe }};
+          const boldTtf = {{ font_bold_ttf | tojson | safe }};
+
+          const makeSrc = (woff, ttf) => {
+            const parts = [];
+            if (woff) parts.push(`url(data:font/woff;base64,${woff}) format("woff")`);
+            if (ttf) parts.push(`url(data:font/ttf;base64,${ttf}) format("truetype")`);
+            return parts.join(',');
+          };
+
+          if (regularWoff || regularTtf) {
+            const src = makeSrc(regularWoff, regularTtf);
+            faces.push(new FontFace("ResleeveSans", src, { weight: "400", style: "normal" }));
+            faces.push(new FontFace("ResleeveSans", src, { weight: "500", style: "normal" }));
+          }
+          if (boldWoff || boldTtf) {
+            const src = makeSrc(boldWoff, boldTtf);
+            faces.push(new FontFace("ResleeveSans", src, { weight: "600", style: "normal" }));
+            faces.push(new FontFace("ResleeveSans", src, { weight: "700", style: "normal" }));
+          }
+          faces.forEach(face => face.load().then(loaded => document.fonts.add(loaded)).catch(() => {}));
+        } catch (err) {
+          console.warn("FontFace load error", err);
+        }
+      }
+      {% endif %}
+    })();
+
     function sanitizeFilename(name) {
       return (name||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
     }
@@ -311,13 +385,53 @@
       const clone=source.cloneNode(true);
       clone.style.transform='none';
 
-      const { bodyBackground = '', backgroundMode = '', canvasFill = '' } = document.body.dataset;
-      let normalizedBackground = (bodyBackground||'').trim();
-      if(!normalizedBackground){
-        const computed=window.getComputedStyle(document.body).background;
-        if(computed && computed!=='none'){ normalizedBackground = computed; }
+      const coverEl=document.querySelector('.album-cover img');
+      const coverMeta=(()=>{
+        if(!source || !coverEl) return null;
+        const canvasRect=source.getBoundingClientRect();
+        const coverRect=coverEl.getBoundingClientRect();
+        const baseWidth=Number(source.dataset.canvasWidth)||canvasRect.width||1;
+        const scale=canvasRect.width/baseWidth;
+        if(!scale) return null;
+        return {
+          src: coverEl.currentSrc || coverEl.src,
+          x: (coverRect.left - canvasRect.left)/scale,
+          y: (coverRect.top - canvasRect.top)/scale,
+          width: coverRect.width/scale,
+          height: coverRect.height/scale,
+        };
+      })();
+
+      if(document.fonts && document.fonts.ready){
+        try{
+          await document.fonts.ready;
+          await Promise.all([
+            document.fonts.load('400 24px "ResleeveSans"'),
+            document.fonts.load('600 24px "ResleeveSans"'),
+            document.fonts.load('600 64px "ResleeveSans"'),
+            document.fonts.load('700 96px "ResleeveSans"')
+          ]);
+        }catch(e){}
       }
 
+      const waitForImages = (root) => Promise.all(
+        Array.from(root.querySelectorAll('img')).map((img) => {
+          if (img.complete && img.naturalWidth) return Promise.resolve();
+          return new Promise((resolve) => {
+            const done = () => resolve();
+            img.addEventListener('load', done, { once: true });
+            img.addEventListener('error', done, { once: true });
+          });
+        })
+      );
+      try {
+        await waitForImages(source);
+        await waitForImages(clone);
+      } catch (e) {
+        console.warn('Image readiness issue', e);
+      }
+
+      const { bodyBackground = '', backgroundMode = '', canvasFill = '' } = document.body.dataset;
       // Wrap for FO export
       const foreignBody=document.createElement('div');
       foreignBody.setAttribute('xmlns','http://www.w3.org/1999/xhtml');
@@ -341,37 +455,52 @@
       const img=new Image(); img.crossOrigin='anonymous'; img.decoding='sync';
       img.onload=()=>{
         try{
-          const canvas=document.createElement('canvas');
-          canvas.width=1440; canvas.height=3120;
-          const ctx=canvas.getContext('2d');
-          const fallbackFill = (canvasFill||'#00010A').trim();
-
-          // Fill background
-          let fillValue = normalizedBackground;
-          if(!fillValue){
-            if(backgroundMode && backgroundMode.startsWith('#')) fillValue = backgroundMode; else fillValue = fallbackFill;
-          }
-          ctx.fillStyle = fillValue; ctx.fillRect(0,0,canvas.width,canvas.height);
-
-          // Draw scaled
           const srcW=1290, srcH=2796;
-          const scale=Math.min(canvas.width/srcW, canvas.height/srcH);
-          const dw=srcW*scale, dh=srcH*scale;
-          const ox=(canvas.width-dw)/2, oy=(canvas.height-dh)/2;
-          ctx.drawImage(img,0,0,srcW,srcH,ox,oy,dw,dh);
+          const canvas=document.createElement('canvas');
+          canvas.width=srcW; canvas.height=srcH;
+          const ctx=canvas.getContext('2d');
+          const fillValue = (canvasFill||'#00010A').trim();
+          ctx.fillStyle = fillValue;
+          ctx.fillRect(0,0,canvas.width,canvas.height);
 
-          const titleEl=document.querySelector('.album-title');
-          const safeTitle = sanitizeFilename(titleEl ? titleEl.textContent.trim() : 'resleeve') || 'resleeve';
-          const fileName = `${safeTitle}-phone-wallpaper.png`;
+          ctx.drawImage(img,0,0,srcW,srcH,0,0,srcW,srcH);
 
-          if(canvas.toBlob){
-            canvas.toBlob(b=>{
-              if(b){ triggerDownloadUrl(URL.createObjectURL(b), fileName, true); }
-              else { triggerDownloadUrl(canvas.toDataURL('image/png'), fileName, false); }
-            }, 'image/png');
-          } else {
-            triggerDownloadUrl(canvas.toDataURL('image/png'), fileName, false);
+          const finalizeDownload = () => {
+            const titleEl=document.querySelector('.album-title');
+            const safeTitle = sanitizeFilename(titleEl ? titleEl.textContent.trim() : 'resleeve') || 'resleeve';
+            const fileName = `${safeTitle}-phone-wallpaper.png`;
+
+            if(canvas.toBlob){
+              canvas.toBlob(b=>{
+                if(b){ triggerDownloadUrl(URL.createObjectURL(b), fileName, true); }
+                else { triggerDownloadUrl(canvas.toDataURL('image/png'), fileName, false); }
+              }, 'image/png');
+            } else {
+              triggerDownloadUrl(canvas.toDataURL('image/png'), fileName, false);
+            }
+          };
+
+          const overlayPromises = [];
+          if(coverMeta && coverMeta.src){
+            overlayPromises.push(new Promise((resolve)=>{
+              const overlayImg=new Image();
+              overlayImg.crossOrigin='anonymous';
+              overlayImg.onload=()=>{
+                ctx.drawImage(
+                  overlayImg,
+                  coverMeta.x,
+                  coverMeta.y,
+                  coverMeta.width,
+                  coverMeta.height
+                );
+                resolve();
+              };
+              overlayImg.onerror=()=>resolve();
+              overlayImg.src=coverMeta.src;
+            }));
           }
+
+          Promise.all(overlayPromises).then(finalizeDownload);
         }catch(e){ console.error(e); alert('Unable to prepare download.'); }
       };
       img.onerror=()=>alert('Unable to prepare download.');
