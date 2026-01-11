@@ -4,16 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7ce414b5-f674-4e2b-8971-8d91beebd72e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/api_testing.py" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/api_testing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Backend/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/desktop-dark.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/desktop-dark.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/desktop-white.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/desktop-white.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/phone-dark.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/phone-dark.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/phone-white.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/phone-white.html" afterDir="false" />
-    </list>
+    <list default="true" id="7ce414b5-f674-4e2b-8971-8d91beebd72e" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -159,6 +150,7 @@
       <workItem from="1767893541851" duration="19000" />
       <workItem from="1768100497791" duration="1247000" />
       <workItem from="1768135450831" duration="1076000" />
+      <workItem from="1768157011159" duration="9000" />
     </task>
     <servers />
   </component>
