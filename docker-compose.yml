@@ -10,4 +10,4 @@
         - "5001:5001"
       command: >
         sh -c "pip install --no-cache-dir flask requests python-barcode pillow numpy matplotlib gunicorn &&
-        PYTHONPATH=/app:/app/Backend gunicorn --bind 0.0.0.0:5001 app:app"
+        gunicorn --chdir /app/Backend --bind 0.0.0.0:5001 app:app"
